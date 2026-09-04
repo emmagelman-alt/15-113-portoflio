@@ -3,8 +3,8 @@
 
   var SCENE_W = 1600;
   var SCENE_H = 900;
-  var FRAME_MS = 320; // time each animation frame is shown
-  var PING_PONG = true; // play forward then backward so the loop never snaps
+  var FRAME_MS = 250; // time each animation frame is shown (250ms = 4 fps)
+  var PING_PONG = false; // true = play forward then backward instead of looping
 
   var scene = document.getElementById("scene");
   var bubble = document.getElementById("bubble");
