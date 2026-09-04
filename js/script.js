@@ -3,7 +3,8 @@
 
   var SCENE_W = 1600;
   var SCENE_H = 900;
-  var FRAME_MS = 160; // time each animation frame is shown
+  var FRAME_MS = 320; // time each animation frame is shown
+  var PING_PONG = true; // play forward then backward so the loop never snaps
 
   var scene = document.getElementById("scene");
   var bubble = document.getElementById("bubble");
@@ -25,11 +26,17 @@
   /* ---------------------------------------------------------------
      Frame-by-frame animation
   ---------------------------------------------------------------- */
-  var current = 0;
+  // Order the frames are shown in. Ping-pong: 0 1 2 ... 6 5 4 ... 1, repeat.
+  var order = frames.map(function (_, i) { return i; });
+  if (PING_PONG && frames.length > 2) {
+    order = order.concat(order.slice(1, -1).reverse());
+  }
+
+  var step = 0;
   function nextFrame() {
-    frames[current].classList.remove("is-active");
-    current = (current + 1) % frames.length;
-    frames[current].classList.add("is-active");
+    frames[order[step]].classList.remove("is-active");
+    step = (step + 1) % order.length;
+    frames[order[step]].classList.add("is-active");
   }
   if (frames.length > 1 && !reduceMotion) {
     setInterval(nextFrame, FRAME_MS);

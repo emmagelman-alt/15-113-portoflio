@@ -55,9 +55,16 @@ html, body {
   opacity: 0;
   pointer-events: none;
   user-select: none;
+  /* cross-fade between frames instead of hard cuts */
+  transition: opacity 240ms ease-in-out;
+  will-change: opacity;
 }
 
 .frame.is-active { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .frame { transition: none; }
+}
 
 /* ------------------------------------------------------------------
    Hotspots (invisible clickable regions over parts of the drawing)
