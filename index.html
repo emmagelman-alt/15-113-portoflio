@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Emma Gelman — Portfolio</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <nav class="nav container">
+      <a href="#home" class="logo">Emma Gelman</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#about">About</a></li>
+        <li><a href="#projects">Projects</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section id="home" class="hero">
+      <div class="container">
+        <h1>Hi, I'm Emma.</h1>
+        <p class="subtitle">Welcome to my portfolio — this is where I'll showcase my projects and work.</p>
+        <a href="#projects" class="btn">View My Work</a>
+      </div>
+    </section>
+
+    <section id="about" class="section">
+      <div class="container">
+        <h2>About Me</h2>
+        <p>
+          Add a short bio here — who you are, what you're studying, and what
+          you're interested in. This is a great place to mention your goals
+          and what makes your work unique.
+        </p>
+      </div>
+    </section>
+
+    <section id="projects" class="section section-alt">
+      <div class="container">
+        <h2>Projects</h2>
+        <div class="project-grid">
+          <article class="project-card">
+            <div class="project-thumb"></div>
+            <h3>Project One</h3>
+            <p>Short description of this project goes here.</p>
+          </article>
+          <article class="project-card">
+            <div class="project-thumb"></div>
+            <h3>Project Two</h3>
+            <p>Short description of this project goes here.</p>
+          </article>
+          <article class="project-card">
+            <div class="project-thumb"></div>
+            <h3>Project Three</h3>
+            <p>Short description of this project goes here.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="section">
+      <div class="container">
+        <h2>Contact</h2>
+        <p>Feel free to reach out at <a href="mailto:eagelman@andrew.cmu.edu">eagelman@andrew.cmu.edu</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; <span id="year"></span> Emma Gelman</p>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
