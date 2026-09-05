@@ -53,6 +53,59 @@
   });
 
   /* ---------------------------------------------------------------
+     Phone screen: map the 100x150 .phone-screen box onto the drawn
+     screen's four corners (scene px, clockwise from top-left).
+     Nudge these numbers if the overlay drifts off the drawing.
+  ---------------------------------------------------------------- */
+  var PHONE_SCREEN = [[58, 686], [137, 675], [192, 782], [80, 807]];
+
+  function solve(A, b) {
+    // Gaussian elimination with partial pivoting (A is n x n, b is n)
+    var n = b.length, i, j, k;
+    for (i = 0; i < n; i++) {
+      var p = i;
+      for (j = i + 1; j < n; j++) if (Math.abs(A[j][i]) > Math.abs(A[p][i])) p = j;
+      var t = A[i]; A[i] = A[p]; A[p] = t;
+      t = b[i]; b[i] = b[p]; b[p] = t;
+      for (j = i + 1; j < n; j++) {
+        var f = A[j][i] / A[i][i];
+        for (k = i; k < n; k++) A[j][k] -= f * A[i][k];
+        b[j] -= f * b[i];
+      }
+    }
+    var x = new Array(n);
+    for (i = n - 1; i >= 0; i--) {
+      var s = b[i];
+      for (j = i + 1; j < n; j++) s -= A[i][j] * x[j];
+      x[i] = s / A[i][i];
+    }
+    return x;
+  }
+
+  function perspective(w, h, q) {
+    // Homography sending (0,0),(w,0),(w,h),(0,h) to the four points in q
+    var src = [[0, 0], [w, 0], [w, h], [0, h]];
+    var A = [], b = [];
+    for (var i = 0; i < 4; i++) {
+      var x = src[i][0], y = src[i][1], X = q[i][0], Y = q[i][1];
+      A.push([x, y, 1, 0, 0, 0, -X * x, -X * y]); b.push(X);
+      A.push([0, 0, 0, x, y, 1, -Y * x, -Y * y]); b.push(Y);
+    }
+    var v = solve(A, b); // a b c d e f g h
+    return "matrix3d(" + [
+      v[0], v[3], 0, v[6],
+      v[1], v[4], 0, v[7],
+      0, 0, 1, 0,
+      v[2], v[5], 0, 1
+    ].join(",") + ")";
+  }
+
+  var phone = document.querySelector(".phone-screen");
+  if (phone) {
+    phone.style.transform = perspective(phone.offsetWidth, phone.offsetHeight, PHONE_SCREEN);
+  }
+
+  /* ---------------------------------------------------------------
      Live clock (user's local time, 12-hour)
   ---------------------------------------------------------------- */
   function tick() {

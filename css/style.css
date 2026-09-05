@@ -59,13 +59,13 @@ html, body {
 
 .frame.is-active { opacity: 1; }
 
-/* "ABOUT!" lettering, cropped from the drawing and shown on every frame */
-.about-art {
+/* Static copy of the phone area (from frame 1) layered over every frame */
+.phone-static {
   position: absolute;
-  left: 405px;
-  top: 660px;
-  width: 315px;
-  height: 155px;
+  left: 30px;
+  top: 640px;
+  width: 310px;
+  height: 210px;
   pointer-events: none;
   user-select: none;
 }
@@ -97,36 +97,28 @@ html, body {
 
 /* ------------------------------------------------------------------
    Phone screen
-   A rectangle mapped onto the drawn phone's screen with an affine
-   transform. Tweak the four numbers below to nudge it into place:
-   --ps-x/--ps-y = top-left corner, --ps-w/--ps-h = size,
-   --ps-skew-x / --ps-skew-y = how much the drawing leans.
+   A 100x150 box that JS maps onto the drawn screen's four corners with
+   a perspective transform (see PHONE_SCREEN in js/script.js). Its white
+   background covers the drawn "00:00" and boxes; the clock and buttons
+   are laid out here in plain 2D and get the drawing's perspective.
 ------------------------------------------------------------------- */
 .phone-screen {
-  --ps-x: 58;
-  --ps-y: 693;
-  --ps-w: 73;
-  --ps-h: 98;
-  --ps-skew-y: -0.096;   /* top edge rises to the right */
-  --ps-skew-x: 0.231;    /* left edge leans right going down */
-
   position: absolute;
   left: 0;
   top: 0;
-  width: calc(var(--ps-w) * 1px);
-  height: calc(var(--ps-h) * 1px);
+  width: 100px;
+  height: 150px;
   transform-origin: 0 0;
-  transform: matrix(1, var(--ps-skew-y), var(--ps-skew-x), 1, var(--ps-x), var(--ps-y));
   background: var(--paper);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 4px 4px 0;
-  gap: 5px;
+  padding: 6px 8px 0;
+  gap: 7px;
 }
 
 .clock {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1;
@@ -135,9 +127,9 @@ html, body {
 }
 
 .phone-apps {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   width: 100%;
 }
 
@@ -145,13 +137,14 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1;
+  height: 27px;
   padding: 0;
   margin: 0;
   border: 2px solid var(--ink);
-  border-radius: 5px;
+  border-radius: 4px;
   background: var(--paper);
   color: var(--ink);
+  font: 600 11px/1 var(--font);
   cursor: pointer;
   text-decoration: none;
   transition: transform 120ms ease, background 120ms ease;
@@ -160,24 +153,9 @@ html, body {
 
 .app:hover,
 .app:focus-visible {
-  transform: scale(1.08);
+  transform: scale(1.05);
   background: #f2f2f6;
   outline: none;
-}
-
-.app svg {
-  width: 62%;
-  height: 62%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.app svg.filled {
-  fill: currentColor;
-  stroke: none;
 }
 
 /* ------------------------------------------------------------------
