@@ -71,6 +71,25 @@ html, body {
 }
 
 /* ------------------------------------------------------------------
+   Whiteboard title (same Helvetica-style caps as the ABOUT card)
+   The board's inner face spans x 683-1522, y 72-508 in the drawing.
+------------------------------------------------------------------- */
+.board-title {
+  position: absolute;
+  left: 683px;
+  top: 100px;
+  width: 839px;
+  margin: 0;
+  text-align: center;
+  font: 400 46px/1 var(--font);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ------------------------------------------------------------------
    Hotspots (invisible clickable regions over parts of the drawing)
 ------------------------------------------------------------------- */
 .hotspot {
