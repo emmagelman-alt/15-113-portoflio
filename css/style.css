@@ -3,6 +3,9 @@
    The drawing is 1600x900. `.scene` is laid out at exactly that size and
    scaled by JS to fit the window, so every coordinate below is in the
    drawing's own pixels.
+   I used claude code to write the entire website. I gave feedback on the chsnges when needed for iteration however I did not perosanlyl write a single line of code.
+   I did draw each animation frame and graphic by hand and mocked them up on wireframes witht he correct apect ratio to give to claude. In that respect, the design is entirely my own.
+ 
 ------------------------------------------------------------------- */
 :root {
   --scene-w: 1600;
@@ -73,6 +76,7 @@ html, body {
 /* ------------------------------------------------------------------
    Whiteboard title (same Helvetica-style caps as the ABOUT card)
    The board's inner face spans x 683-1522, y 72-508 in the drawing.
+   Whiteboard serves a space to showcase projects, I wanted it to feel like my studio setup!
 ------------------------------------------------------------------- */
 .board-title {
   position: absolute;
