@@ -114,8 +114,8 @@ html, body {
 .note {
   position: absolute;
   left: 700px;
-  top: 166px;
-  width: 420px;
+  top: 164px;
+  width: 336px;
   height: 336px;
   display: block;
   color: var(--ink);
@@ -138,11 +138,10 @@ html, body {
   height: 100%;
 }
 
-.note-paper path {
+.note-paper rect {
   fill: var(--paper);
   stroke: var(--ink);
   stroke-width: 3;
-  stroke-linejoin: round;
 }
 
 .note-pin { fill: var(--ink); }
@@ -150,25 +149,24 @@ html, body {
 .note-shot,
 .note-title,
 .note-tags,
-.note-desc { position: absolute; left: 42px; width: 336px; }
+.note-desc { position: absolute; left: 24px; width: 288px; }
 
 .note-shot {
-  top: 48px;
-  height: 140px;
-  object-fit: cover;
-  object-position: top left;
+  top: 40px;
+  height: 162px;          /* 288 x 162 keeps the page's 16:9 shape, no crop */
+  object-fit: fill;
   border: 1.5px solid var(--ink);
 }
 
 .note-title {
-  top: 196px;
+  top: 212px;
   font-size: 17px;
   font-weight: 500;
   letter-spacing: 0.01em;
 }
 
 .note-tags {
-  top: 221px;
+  top: 236px;
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -183,9 +181,9 @@ html, body {
 }
 
 .note-desc {
-  top: 247px;
-  font-size: 10px;
-  line-height: 1.35;
+  top: 260px;
+  font-size: 9.5px;
+  line-height: 1.32;
 }
 
 @media (prefers-reduced-motion: reduce) {
