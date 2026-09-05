@@ -107,6 +107,92 @@ html, body {
 }
 
 /* ------------------------------------------------------------------
+   Project note pinned to the progress board
+   Sits inside the whiteboard's inner face (x 683-1522, y 72-508),
+   below the board title.
+------------------------------------------------------------------- */
+.note {
+  position: absolute;
+  left: 700px;
+  top: 166px;
+  width: 420px;
+  height: 336px;
+  display: block;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 140ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.note:hover,
+.note:focus-visible {
+  transform: translateY(-4px) rotate(-0.4deg);
+  outline: none;
+}
+
+/* the drawn sheet sits behind everything else in the note */
+.note-paper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.note-paper path {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.note-pin { fill: var(--ink); }
+
+.note-shot,
+.note-title,
+.note-tags,
+.note-desc { position: absolute; left: 42px; width: 336px; }
+
+.note-shot {
+  top: 48px;
+  height: 140px;
+  object-fit: cover;
+  object-position: top left;
+  border: 1.5px solid var(--ink);
+}
+
+.note-title {
+  top: 196px;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.note-tags {
+  top: 221px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.note-tags span {
+  font-size: 9px;
+  line-height: 1;
+  padding: 3px 6px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+}
+
+.note-desc {
+  top: 247px;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note { transition: none; }
+}
+
+/* ------------------------------------------------------------------
    Hotspots (invisible clickable regions over parts of the drawing)
 ------------------------------------------------------------------- */
 .hotspot {
