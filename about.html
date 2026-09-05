@@ -4,37 +4,229 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>About — Emma Gelman</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca&family=Reenie+Beanie&display=swap" rel="stylesheet" />
   <style>
+    :root {
+      --sheet-w: 1280;
+      --sheet-h: 720;
+      --ink: #000;
+      --paper: #fff;
+    }
+
+    * { box-sizing: border-box; }
+
     html, body {
       margin: 0;
       height: 100%;
-      background: #ffffff;
-      color: #14142b;
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      overflow: hidden;
     }
-    body {
+
+    /* ------------------------------------------------------------
+       Fixed 1280x720 layout, scaled to fit the window
+    ------------------------------------------------------------- */
+    .stage {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .sheet {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: calc(var(--sheet-w) * 1px);
+      height: calc(var(--sheet-h) * 1px);
+      transform: translate(-50%, -50%) scale(var(--scale, 1));
+      transform-origin: center center;
+    }
+
+    .photo {
+      position: absolute;
+      left: 91px;
+      top: 128px;
+      width: 512px;
+      height: 464px;
+      object-fit: cover;
+    }
+
+    /* The original lays the text out 415px wide at 23px, then scales it
+       by 1.23 — reproduced the same way so the line breaks match. */
+    .bio {
+      position: absolute;
+      left: 658px;
+      top: 127px;
+      width: 415px;
+      margin: 0;
+      font-family: "Reenie Beanie", "Bradley Hand", "Comic Sans MS", cursive;
+      font-size: 23px;
+      line-height: 26px;
+      letter-spacing: -1px;
+      transform: scale(1.23);
+      transform-origin: 0 0;
+    }
+
+    .bio p { margin: 0; }
+    .bio p + p { margin-top: 26px; }
+
+    .bio .signature {
+      text-align: right;
+      margin-top: 26px;
+    }
+
+    .bird {
+      position: absolute;
+      left: 1018px;
+      top: 370px;
+      width: 137px;
+      height: 137px;
+    }
+
+    .links {
+      position: absolute;
+      left: 1021px;
+      top: 546px;
+      height: 48px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 8px;
     }
-    h1 {
-      font-size: clamp(3rem, 12vw, 8rem);
-      font-weight: 500;
-      margin: 0;
+
+    .links a {
+      display: block;
+      transition: transform 120ms ease;
     }
+
+    .links a:nth-child(1) { height: 47px; }
+    .links a:nth-child(2) { height: 37px; }
+    .links a:nth-child(3) { height: 48px; }
+
+    .links a:hover,
+    .links a:focus-visible {
+      transform: scale(1.1);
+      outline: none;
+    }
+
+    .links img {
+      height: 100%;
+      width: auto;
+      display: block;
+    }
+
     .back {
-      position: fixed;
-      top: 1.25rem;
-      left: 1.5rem;
-      color: #14142b;
+      position: absolute;
+      left: 556px;
+      top: 636px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      color: var(--ink);
       text-decoration: none;
-      font-size: 1rem;
+      font-family: "Lexend Deca", -apple-system, Helvetica, Arial, sans-serif;
+      font-size: 19px;
+      line-height: 22px;
+      letter-spacing: -1px;
     }
-    .back:hover { text-decoration: underline; }
+
+    .back img {
+      height: 80px;
+      width: auto;
+      display: block;
+    }
+
+    .back:hover span,
+    .back:focus-visible span {
+      text-decoration: underline;
+    }
+
+    /* ------------------------------------------------------------
+       Phones: stack the photo and text instead of scaling down
+    ------------------------------------------------------------- */
+    @media (max-width: 700px) {
+      html, body { overflow: auto; }
+      .stage { position: static; overflow: visible; }
+      .sheet {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none;
+        padding: 24px 20px 40px;
+        max-width: 480px;
+        margin: 0 auto;
+      }
+      .photo { position: static; width: 100%; height: auto; }
+      .bio {
+        position: static;
+        width: auto;
+        margin-top: 24px;
+        font-size: 28px;
+        line-height: 32px;
+        transform: none;
+      }
+      .bird { position: static; display: block; margin: 8px 0 0 auto; }
+      .links { position: static; justify-content: flex-end; margin-top: 12px; }
+      .back { position: static; justify-content: center; margin-top: 40px; }
+    }
   </style>
 </head>
 <body>
-  <a class="back" href="index.html">← back to my desk</a>
-  <h1>Hi</h1>
+  <div class="stage">
+    <div class="sheet" id="sheet">
+      <img class="photo" src="images/about/photo.jpg" alt="Emma holding up her phone in a café window, coffee in hand" />
+
+      <div class="bio">
+        <p>
+          I am a student at Carnegie Mellon University School of Design, studying
+          experiential design with minors in Product Management and HCI. I am
+          interested in visual identity, product design, branding, advertising, and
+          experiential marketing. I see design as creative problem-solving and enjoy
+          helping clients find creative solutions to their needs.&nbsp; In my free
+          time, I love to read, cook, boulder, play volleyball, travel, and get lost
+          in museums.
+        </p>
+        <p>
+          I am always looking for opportunities to<br />
+          learn and collaborate.&nbsp; Please get in touch.
+        </p>
+        <p class="signature">- Emma Gelman</p>
+      </div>
+
+      <img class="bird" src="images/about/bird.jpg" alt="" />
+
+      <nav class="links" aria-label="Contact">
+        <a href="mailto:emma.gelman@icloud.com" aria-label="Email Emma">
+          <img src="images/about/icon-mail.png" alt="" />
+        </a>
+        <a href="https://www.linkedin.com/in/emma-gelman-a0129829a" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+          <img src="images/about/icon-linkedin.jpg" alt="" />
+        </a>
+        <a href="https://drive.google.com/file/d/18ziGE2qIQTvCwzvj7IIXVa9e6jbpDOmd/view?usp=sharing" target="_blank" rel="noopener noreferrer" aria-label="Résumé">
+          <img src="images/about/icon-resume.png" alt="" />
+        </a>
+      </nav>
+
+      <a class="back" href="index.html">
+        <img src="images/about/back-figure.jpg" alt="" />
+        <span>BACK</span>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var sheet = document.getElementById("sheet");
+      var mq = window.matchMedia("(max-width: 700px)");
+      function fit() {
+        if (mq.matches) { sheet.style.removeProperty("--scale"); return; }
+        var s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+        sheet.style.setProperty("--scale", s);
+      }
+      window.addEventListener("resize", fit);
+      fit();
+    })();
+  </script>
 </body>
 </html>
