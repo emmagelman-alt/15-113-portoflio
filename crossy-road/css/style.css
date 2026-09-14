@@ -1,0 +1,264 @@
+/* style.css — the page around the canvas. The game itself is drawn in WebGL,
+   so this is only the chrome: score, overlays and the touch d-pad. */
+
+:root {
+  --ink: #14142b;
+  --paper: #ffffff;
+  --font: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --shadow: 0 10px 0 rgba(20, 20, 43, 0.16);
+}
+
+* { box-sizing: border-box; }
+
+/* A class that sets `display` beats the [hidden] attribute's UA rule, which
+   silently un-hides elements. Make the attribute authoritative. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #bfe4f7;
+  font-family: var(--font);
+  color: var(--ink);
+  /* Stop the browser turning swipes into page scrolls / pull-to-refresh. */
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#canvas {
+  display: block;
+  width: 100vw;
+  height: 100dvh;
+}
+
+/* ---------------------------------------------------------------- HUD --- */
+
+.hud {
+  position: fixed;
+  inset: 0 0 auto 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: max(16px, env(safe-area-inset-top)) 18px 0;
+  pointer-events: none;
+}
+
+.score-block { display: flex; flex-direction: column; line-height: 0.95; }
+
+.score {
+  font-size: clamp(40px, 9vw, 68px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--paper);
+  /* The score sits over bright grass, so it needs a real outline. */
+  text-shadow: 0 3px 0 rgba(20, 20, 43, 0.45), 0 0 12px rgba(20, 20, 43, 0.25);
+}
+
+.score.pop { animation: pop 180ms ease-out; }
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.16); }
+  100% { transform: scale(1); }
+}
+
+.best {
+  margin-top: 10px;
+  font-size: 13px;
+  color: rgba(20, 20, 43, 0.62);
+}
+
+.best b { font-weight: 700; }
+
+.warnings { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+
+.warn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paper);
+  animation: blink 520ms steps(2, end) infinite;
+}
+
+.warn-train { background: #e0392b; }
+.warn-eagle { background: #6b4bd0; }
+
+@keyframes blink { 50% { opacity: 0.28; } }
+
+.mute {
+  pointer-events: auto;
+  margin-top: 8px;
+  padding: 7px 13px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  font: 600 12px var(--font);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+/* ----------------------------------------------------------- overlays --- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(20, 20, 43, 0.32);
+  backdrop-filter: blur(3px);
+  z-index: 5;
+}
+
+.overlay[hidden] { display: none; }
+
+.card {
+  width: min(420px, 100%);
+  padding: 30px 28px 26px;
+  border: 3px solid var(--ink);
+  border-radius: 20px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  text-align: center;
+  animation: rise 220ms ease-out;
+}
+
+@keyframes rise {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.card h1 {
+  margin: 0 0 6px;
+  font-size: clamp(34px, 8vw, 46px);
+  letter-spacing: -0.02em;
+}
+
+.card h2 { margin: 0 0 4px; font-size: 28px; }
+
+.tag { margin: 0 0 22px; font-size: 14px; color: rgba(20, 20, 43, 0.7); }
+
+.cause { margin: 0 0 16px; font-size: 14px; color: rgba(20, 20, 43, 0.68); }
+
+.ribbon {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: #f2c53d;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.final {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 2px;
+}
+
+.final b { font-size: 46px; line-height: 1; }
+.final span { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(20, 20, 43, 0.55); }
+.final.small { margin-bottom: 18px; }
+.final.small b { font-size: 22px; }
+
+.btn {
+  width: 100%;
+  padding: 14px 20px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper);
+  font: 700 17px var(--font);
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.btn:hover, .btn:focus-visible { transform: translateY(-2px); }
+.btn:active { transform: translateY(1px); }
+
+.hint { margin: 12px 0 0; font-size: 12px; color: rgba(20, 20, 43, 0.5); }
+
+.keys { margin: 20px 0 0; padding: 0; list-style: none; font-size: 12.5px; line-height: 2; color: rgba(20, 20, 43, 0.72); }
+
+kbd {
+  display: inline-block;
+  min-width: 22px;
+  margin: 0 1px;
+  padding: 2px 5px;
+  border: 1.5px solid var(--ink);
+  border-bottom-width: 3px;
+  border-radius: 5px;
+  background: var(--paper);
+  font: 600 11px var(--font);
+}
+
+/* -------------------------------------------------------- touch pads --- */
+
+.pads {
+  position: fixed;
+  right: 16px;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-areas: ". up ." "left down right";
+  gap: 8px;
+  z-index: 4;
+}
+
+.pads[hidden] { display: none; }
+
+.pad {
+  width: 60px;
+  height: 60px;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  font-size: 22px;
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: none;
+}
+
+.pad:active { background: var(--ink); color: var(--paper); }
+
+.up { grid-area: up; }
+.left { grid-area: left; }
+.down { grid-area: down; }
+.right { grid-area: right; }
+
+/* The pads would sit on top of the game-over card, so hide them there. */
+body[data-screen="start"] .pads,
+body[data-screen="over"] .pads { display: none; }
+
+/* ------------------------------------------------------------- back ---- */
+
+.back {
+  position: fixed;
+  left: 18px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 4;
+  padding: 8px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+body[data-screen="play"] .back { opacity: 0.35; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .score.pop, .warn { animation: none; }
+}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Crossy Road — Emma Gelman</title>
+  <meta name="description" content="A blocky endless road-crossing game built with Three.js." />
+  <link rel="stylesheet" href="css/style.css" />
+  <!--
+    Three.js comes from a pinned CDN build and is mapped to the bare name
+    "three" so the modules below can import it like a package. No build step,
+    no node_modules — the folder runs as-is on GitHub Pages.
+  -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body data-screen="start">
+  <canvas id="canvas"></canvas>
+
+  <!-- Score, best and the two warning lights -->
+  <div class="hud">
+    <div class="score-block">
+      <span id="score" class="score">0</span>
+      <span class="best">Best <b id="best">0</b></span>
+    </div>
+    <div class="warnings">
+      <span id="warn-train" class="warn warn-train" hidden>Train</span>
+      <span id="warn-eagle" class="warn warn-eagle" hidden>Eagle</span>
+    </div>
+    <button id="mute" class="mute" type="button" aria-pressed="false">Sound on</button>
+  </div>
+
+  <!-- Title screen -->
+  <div id="start" class="overlay">
+    <div class="card">
+      <h1>Crossy&nbsp;Road</h1>
+      <p class="tag">Get the chicken across. Don't stop moving.</p>
+      <button id="play" class="btn" type="button">Play</button>
+      <ul class="keys">
+        <li><kbd>&uarr;</kbd><kbd>&larr;</kbd><kbd>&darr;</kbd><kbd>&rarr;</kbd> or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to hop</li>
+        <li>On a phone: tap to go forward, swipe to turn</li>
+        <li>Stand still too long and an eagle takes you</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Game over -->
+  <div id="over" class="overlay" hidden>
+    <div class="card">
+      <p id="new-best" class="ribbon" hidden>New best!</p>
+      <h2>Game over</h2>
+      <p id="cause" class="cause"></p>
+      <p class="final"><b id="final-score">0</b><span>score</span></p>
+      <p class="final small"><b id="final-best">0</b><span>best</span></p>
+      <button id="again" class="btn" type="button">Play again</button>
+      <p class="hint">or press <kbd>Space</kbd></p>
+    </div>
+  </div>
+
+  <!-- On-screen controls, shown on touch devices only -->
+  <div id="pads" class="pads" hidden>
+    <button class="pad up" data-move="up" type="button" aria-label="Hop forward">&uarr;</button>
+    <button class="pad left" data-move="left" type="button" aria-label="Hop left">&larr;</button>
+    <button class="pad down" data-move="down" type="button" aria-label="Hop back">&darr;</button>
+    <button class="pad right" data-move="right" type="button" aria-label="Hop right">&rarr;</button>
+  </div>
+
+  <!-- Only appears if WebGL or the CDN is unavailable -->
+  <div id="fatal" class="overlay" hidden>
+    <div class="card">
+      <h2>Can't start the game</h2>
+      <p class="cause">This needs WebGL and a connection to load Three.js.</p>
+      <p id="fatal-detail" class="hint"></p>
+    </div>
+  </div>
+
+  <a class="back" href="../index.html">&larr; Back to the desk</a>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -198,6 +198,10 @@ html, body {
   line-height: 1.32;
 }
 
+/* The board holds two notes side by side. 700 + 336 wide + a 50px gap puts
+   the second one at 1086, still inside the board's inner face (x 683-1522). */
+.note--crossy { left: 1086px; }
+
 @media (prefers-reduced-motion: reduce) {
   .note { transition: none; }
 }

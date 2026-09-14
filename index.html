@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Emma Gelman — Welcome to my desk</title>
-  <link rel="stylesheet" href="css/style.css?v=4" />
+  <link rel="stylesheet" href="css/style.css?v=5" />
 </head>
 <body>
   <div class="stage">
@@ -17,18 +17,18 @@
 
       <!-- Animation frames: drop your exported frames into images/frames/ -->
       <div class="frames" id="frames">
-        <img class="frame is-active" src="images/frames/frame-01.png?v=4" alt="Emma at her desk" />
-        <img class="frame" src="images/frames/frame-02.png?v=4" alt="" />
-        <img class="frame" src="images/frames/frame-03.png?v=4" alt="" />
-        <img class="frame" src="images/frames/frame-04.png?v=4" alt="" />
-        <img class="frame" src="images/frames/frame-05.png?v=4" alt="" />
-        <img class="frame" src="images/frames/frame-06.png?v=4" alt="" />
-        <img class="frame" src="images/frames/frame-07.png?v=4" alt="" />
+        <img class="frame is-active" src="images/frames/frame-01.png?v=5" alt="Emma at her desk" />
+        <img class="frame" src="images/frames/frame-02.png?v=5" alt="" />
+        <img class="frame" src="images/frames/frame-03.png?v=5" alt="" />
+        <img class="frame" src="images/frames/frame-04.png?v=5" alt="" />
+        <img class="frame" src="images/frames/frame-05.png?v=5" alt="" />
+        <img class="frame" src="images/frames/frame-06.png?v=5" alt="" />
+        <img class="frame" src="images/frames/frame-07.png?v=5" alt="" />
       </div>
 
       <!-- Phone + "Contact me!" from frame 1, shown on every frame so the phone
            (and the clock/buttons on it) never shift between frames -->
-      <img class="phone-static" src="images/phone-static.png?v=4" alt="" />
+      <img class="phone-static" src="images/phone-static.png?v=5" alt="" />
 
       <!-- Title written across the top of the whiteboard -->
       <h2 class="board-title">In progress</h2>
@@ -42,7 +42,7 @@
           <circle class="note-pin" cx="168" cy="22" r="8" />
         </svg>
 
-        <img class="note-shot" src="images/project-113-thumb.png?v=4" alt="The desk scene homepage" />
+        <img class="note-shot" src="images/project-113-thumb.png?v=5" alt="The desk scene homepage" />
         <!-- title, tags and description flow in order, so a wrapped tag
              pushes the text down instead of overlapping it -->
         <span class="note-body">
@@ -53,6 +53,28 @@
           <span class="note-desc">
             Deployed a live working website through GitHub Pages using Claude Code and my own sketches.
             Animation was drawn by hand and brought to life with Claude Code.
+          </span>
+        </span>
+      </a>
+
+      <!-- Second project note, pinned beside the first -->
+      <a class="note note--crossy" href="crossy-road/index.html"
+         aria-label="Crossy Road — play the game">
+        <!-- square sheet with a pin, behind the content -->
+        <svg class="note-paper" viewBox="0 0 336 336" aria-hidden="true">
+          <rect x="3" y="3" width="330" height="330" />
+          <circle class="note-pin" cx="168" cy="22" r="8" />
+        </svg>
+
+        <img class="note-shot" src="images/crossy-road-thumb.jpg?v=5" alt="The Crossy Road game, mid-run" />
+        <span class="note-body">
+          <span class="note-title">Crossy Road</span>
+          <span class="note-tags">
+            <span>HTML</span><span>CSS</span><span>JavaScript</span><span>Three.js</span><span>WebGL</span><span>Claude Code</span>
+          </span>
+          <span class="note-desc">
+            An endless road-crossing game built from scratch in the browser. The roads, rivers and
+            railways are generated as you go, so the map is never the same twice.
           </span>
         </span>
       </a>
@@ -84,6 +106,6 @@
     </div>
   </div>
 
-  <script src="js/script.js?v=4"></script>
+  <script src="js/script.js?v=5"></script>
 </body>
 </html>
