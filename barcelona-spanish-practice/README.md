@@ -1,6 +1,28 @@
-# Sobremesa · Barcelona Spanish practice
+# Sobremesa · Language conversation practice
 
-A personal, local-first voice conversation prototype for an advanced Spanish learner. Python/FastAPI manages transcription and structured AI coaching; a small vanilla JavaScript interface handles browser audio. The portfolio outside this folder is unchanged.
+A personal, local-first voice conversation prototype for Spanish, Italian, Russian, and Mandarin learners at beginner, intermediate, and advanced levels. Python/FastAPI manages transcription and structured AI coaching; a small vanilla JavaScript interface handles browser audio.
+
+## AI tools and APIs used
+
+- **OpenAI Codex:** helped plan, write, debug, test, and document the Python backend and browser interface through iterative prompts and feedback.
+- **Groq API + `openai/gpt-oss-120b`:** generates conversation replies, translations, corrections, and natural phrasing suggestions. The model runs through Groq; the app does not call the OpenAI API.
+- **Groq Whisper (`whisper-large-v3`):** transcribes microphone recordings and supplies the Russian transcript used for phrase matching.
+- **Lingolix API:** scores Spanish and Italian pronunciation and provides word/syllable feedback.
+- **Browser APIs:** `getUserMedia` and `MediaRecorder` capture speech, Web Audio prepares recordings, and Speech Synthesis reads replies aloud. These are browser capabilities, not separate AI subscriptions.
+
+Gemini and Azure were explored during setup but are not used by the current app. Russian phrase-match percentages are calculated locally from word differences, not generated as AI pronunciation scores.
+
+## Critical prompts that shaped the project
+
+The following are condensed paraphrases of the project requests, not verbatim quotes:
+
+- **Core goal:** Build a Python web app where users choose a language and location, speak with a bot, receive explanations of mistakes, and learn natural regional conversation instead of only textbook language.
+- **Initial scope:** Start with a personal prototype for an advanced Spanish learner practicing in Barcelona, Spain.
+- **Voice and accent practice:** Slow the voice to conversational speed, add expressive phrasing, and introduce spoken exercises with feedback to help learners sound more natural.
+- **Broader access:** Add Italian, Russian, and Mandarin, then beginner and intermediate levels alongside advanced.
+- **Practice progression:** Change the practice phrase when the learner scores above 95%, so they can keep practicing with different material.
+- **Russian fallback:** Use phrase matching when Russian pronunciation scoring is unavailable, clearly distinguishing recognized-word similarity from pronunciation accuracy.
+- **Visual direction:** Use the peach, lavender, and navy palette (`#f1dac4`, `#a69cac`, `#474973`, `#161b33`, `#0d0c1d`), then lighten the background.
 
 ## Run locally
 
@@ -96,9 +118,9 @@ API documentation: https://lingolix.com/en/api-portal/docs
 
 Choose Spanish (Spain), Italian (Italy), Russian (Russia), or Mandarin (China) and a city at the top of the app. Choose Beginner, Intermediate, or Advanced. The level changes conversation starters, vocabulary, reply length, and coaching depth; Advanced remains the default. Accent assessment uses the same pronunciation standard at every level. Changing the language or location starts a fresh conversation, clears any local accent recording, and updates the transcription language, voice choices, starters, and explanation-language option. Mandarin uses simplified Chinese. Voices depend on the device; no city-specific voice is guaranteed.
 
-Lingolix assessment is enabled for Spanish and Italian. Russian and Mandarin provide sample playback and local recording/comparison only; no pronunciation or tone scores are fabricated. Current provider support: https://lingolix.com/en. Sourced regional notes currently exist only for the original Barcelona profile. Other locations guide conversation context but have no curated regional reference library yet.
+Lingolix assessment is enabled for Spanish and Italian. Russian provides transcript-based phrase matching; Mandarin provides sample playback and local recording/comparison only. Neither receives automatic pronunciation or tone scores. Current provider support: https://lingolix.com/en. Sourced regional notes currently exist only for the original Barcelona profile. Other locations guide conversation context but have no curated regional reference library yet.
 
-Accent practice has ten phrases each for Spanish and Italian. A pronunciation accuracy score strictly above 95/100 automatically selects the next unfinished phrase and clears the old recording while retaining its labeled feedback. Exactly 95 does not advance. Finishing the library starts a new round with a different phrase. Progress is in memory and resets on refresh or practice-setting changes. Russian and Mandarin retain manual selection without scores.
+Accent practice has ten phrases each for Spanish and Italian. A pronunciation accuracy score strictly above 95/100 automatically selects the next unfinished phrase and clears the old recording while retaining its labeled feedback. Exactly 95 does not advance. Finishing the library starts a new round with a different phrase. Progress is in memory and resets on refresh or practice-setting changes. Russian also advances through its phrase library using its separate phrase-match score. Mandarin retains manual selection without scores.
 Run progression checks with `node --test tests/test_accent_progression.cjs`.
 
 Russian phrase match uses Groq Whisper transcription without a target-text hint. Word edit distance produces a 0–100 match percentage; it is not pronunciation assessment. Missing, extra and substituted words are shown. Punctuation, case, stress marks and е/ё differences are ignored, but й remains distinct. Scores above 95 advance through ten Russian phrases. Mandarin still has recording comparison only.
