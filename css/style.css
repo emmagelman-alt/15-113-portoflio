@@ -389,3 +389,10 @@ html, body {
   .bubble { animation: none; }
   .app { transition: none; }
 }
+
+/* Three project notes fit within the illustrated board (x 683–1522). */
+.note { left: 700px; width: 255px; }
+.note--crossy { left: 975px; }
+.note--sobremesa { left: 1250px; }
+.note-shot { left: 18px; width: 219px; height: 123px; }
+.note-body { left: 18px; top: 175px; width: 219px; }
