@@ -24,6 +24,14 @@ The following are condensed paraphrases of the project requests, not verbatim qu
 - **Russian fallback:** Use phrase matching when Russian pronunciation scoring is unavailable, clearly distinguishing recognized-word similarity from pronunciation accuracy.
 - **Visual direction:** Use the peach, lavender, and navy palette (`#f1dac4`, `#a69cac`, `#474973`, `#161b33`, `#0d0c1d`), then lighten the background.
 
+## How conversation works
+
+The browser records microphone input. Python sends the audio to Groq Whisper, which returns a transcript. The user can review the transcript in the reply bar, make edits, and hit Send when happy with it. Python sends the message and relevant context to the Groq chat API. The API returns a reply, translation, and corrections, which the browser displays.
+
+## How accent practice works
+
+For Spanish and Italian, Python sends the audio recording and target phrase to the Lingolix API, which returns pronunciation scores and word-level feedback. For Russian, Python sends the recording to Groq Whisper. The resulting transcript is compared locally with the target phrase to calculate a phrase-match score, rather than a pronunciation score. Mandarin does not yet have a scoring feature.
+
 ## Run locally
 
 Python 3.9 or newer. From this folder:
