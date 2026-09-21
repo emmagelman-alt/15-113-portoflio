@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: sobremesa-private-demo
+    runtime: python
+    plan: free
+    rootDir: barcelona-spanish-practice
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1 --proxy-headers --forwarded-allow-ips '*'
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: DEMO_AUTH_REQUIRED
+        value: '1'
+      - key: DEMO_PASSWORD
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: LINGOLIX_API_KEY
+        sync: false

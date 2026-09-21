@@ -8,6 +8,7 @@ from typing import List, Literal, Optional
 from urllib.parse import urlparse
 
 import accent
+from demo_auth import check_access
 from languages import LANGUAGES, LEVEL_GUIDANCE, location
 import httpx
 from dotenv import load_dotenv
@@ -20,7 +21,10 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / '.env')
 app = FastAPI(title='Sobremesa · Language practice')
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=['localhost', '127.0.0.1', '[::1]', 'testserver'])
+allowed_hosts = ['localhost', '127.0.0.1', '[::1]', 'testserver']
+if os.getenv('RENDER_EXTERNAL_HOSTNAME'):
+    allowed_hosts.append(os.environ['RENDER_EXTERNAL_HOSTNAME'])
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 app.mount('/static', StaticFiles(directory=ROOT / 'static'), name='static')
 REFERENCES = json.loads((ROOT / 'references.json').read_text())
 RECENT_CALLS = deque()
@@ -66,6 +70,9 @@ class CoachReply(BaseModel):
 
 @app.middleware('http')
 async def local_requests(request: Request, call_next):
+    denied = check_access(request)
+    if denied is not None:
+        return denied
     # Prevent another website from spending this local app's API quota.
     origin = request.headers.get('origin')
     if request.method == 'POST' and origin and urlparse(origin).netloc != request.headers.get('host'):
@@ -76,6 +83,10 @@ async def local_requests(request: Request, call_next):
     response.headers['Referrer-Policy'] = 'no-referrer'
     response.headers['Cache-Control'] = 'no-store'
     return response
+
+@app.get('/healthz')
+def health():
+    return {'status': 'ok'}
 
 @app.get('/')
 def index():
