@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Emma Gelman — Welcome to my desk</title>
-  <link rel="stylesheet" href="css/style.css?v=5" />
+  <link rel="stylesheet" href="css/style.css?v=6" />
 </head>
 <body>
   <div class="stage">
@@ -33,6 +33,10 @@
       <!-- Title written across the top of the whiteboard -->
       <h2 class="board-title">In progress</h2>
 
+      <!-- Project notes pinned to the progress board. Two fit side by side;
+           any more wrap onto new rows and the board scrolls. -->
+      <div class="board-notes">
+
       <!-- Project note pinned to the progress board -->
       <a class="note" href="https://emmagelman-alt.github.io/15-113-portoflio/"
          aria-label="113 Portfolio — open the project">
@@ -58,7 +62,7 @@
       </a>
 
       <!-- Second project note, pinned beside the first -->
-      <a class="note note--crossy" href="crossy-road/index.html"
+      <a class="note" href="crossy-road/index.html"
          aria-label="Crossy Road — play the game">
         <!-- square sheet with a pin, behind the content -->
         <svg class="note-paper" viewBox="0 0 336 336" aria-hidden="true">
@@ -78,6 +82,31 @@
           </span>
         </span>
       </a>
+
+      <!-- Third project note, on the board's second row -->
+      <a class="note" href="https://github.com/emmagelman-alt/15-113-portoflio/tree/main/barcelona-spanish-practice"
+         target="_blank" rel="noopener noreferrer"
+         aria-label="Sobremesa — view the source and setup instructions on GitHub">
+        <!-- square sheet with a pin, behind the content -->
+        <svg class="note-paper" viewBox="0 0 336 336" aria-hidden="true">
+          <rect x="3" y="3" width="330" height="330" />
+          <circle class="note-pin" cx="168" cy="22" r="8" />
+        </svg>
+
+        <img class="note-shot" src="images/sobremesa-thumb.jpg?v=6" alt="The Sobremesa conversation practice screen, set in Barcelona" />
+        <span class="note-body">
+          <span class="note-title">Sobremesa</span>
+          <span class="note-tags">
+            <span>Python</span><span>FastAPI</span><span>JavaScript</span><span>Groq API</span><span>Whisper</span><span>Codex</span>
+          </span>
+          <span class="note-desc">
+            A voice conversation app for practicing Spanish, Italian, Russian or Mandarin. Talk with a
+            local, get gentle corrections and more natural phrasing, and practice your accent.
+          </span>
+        </span>
+      </a>
+
+      </div>
 
       <!-- "ABOUT" tent card on the desk -->
       <a class="hotspot about" href="about.html" style="--x:598; --y:618; --w:165; --h:80" aria-label="About"></a>

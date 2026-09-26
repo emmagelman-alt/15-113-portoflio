@@ -111,14 +111,52 @@ html, body {
 }
 
 /* ------------------------------------------------------------------
-   Project note pinned to the progress board
-   Sits inside the whiteboard's inner face (x 683-1522, y 72-508),
-   below the board title.
+   Project notes pinned to the progress board
+   The notes live in a scrolling area that fills the whiteboard's inner
+   face (x 683-1522, y 72-508) below the board title. Two notes fit side
+   by side; the rest wrap onto new rows, reached with the scroll bar on
+   the board's right-hand side. The padding puts the first row exactly
+   where the notes have always sat (x 700 / 1086, y 164) and leaves room
+   for the hover lift.
 ------------------------------------------------------------------- */
-.note {
+.board-notes {
   position: absolute;
-  left: 700px;
-  top: 164px;
+  left: 683px;
+  top: 160px;
+  width: 839px;
+  height: 348px;
+  padding: 4px 0 16px 17px;
+  display: grid;
+  grid-template-columns: repeat(2, 336px);
+  column-gap: 50px;
+  row-gap: 32px;
+  align-content: start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* scroll bar drawn in the same ink as the board */
+.board-notes::-webkit-scrollbar { width: 12px; }
+.board-notes::-webkit-scrollbar-track {
+  background: var(--paper);
+  border-left: 1.5px solid var(--ink);
+}
+.board-notes::-webkit-scrollbar-thumb {
+  background: var(--ink);
+  border: 3px solid var(--paper);
+  border-radius: 6px;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .board-notes {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ink) var(--paper);
+  }
+}
+
+.note {
+  position: relative;
   width: 336px;
   height: 336px;
   display: block;
@@ -197,10 +235,6 @@ html, body {
   font-size: 9.5px;
   line-height: 1.32;
 }
-
-/* The board holds two notes side by side. 700 + 336 wide + a 50px gap puts
-   the second one at 1086, still inside the board's inner face (x 683-1522). */
-.note--crossy { left: 1086px; }
 
 @media (prefers-reduced-motion: reduce) {
   .note { transition: none; }
