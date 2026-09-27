@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Emma Gelman — Welcome to my desk</title>
-  <link rel="stylesheet" href="css/style.css?v=6" />
+  <link rel="stylesheet" href="css/style.css?v=7" />
 </head>
 <body>
   <div class="stage">
@@ -108,6 +108,29 @@
 
       </div>
 
+      <!-- Speech bubble from Emma that opens the restaurant rec chat -->
+      <button class="rec-bubble" id="recBubble" type="button"
+              aria-expanded="false" aria-controls="recChat">need a restaurant rec?</button>
+
+      <!-- Restaurant rec chat, written on the whiteboard in place of the notes.
+           Answers come from my Beli list via backend-for-restaurant-bot- on Render. -->
+      <section class="rec-chat" id="recChat" aria-label="Restaurant recommendations" hidden>
+        <h2 class="rec-heading">Restaurant recs</h2>
+        <button class="rec-close" id="recClose" type="button" aria-label="Close restaurant chat">&times;</button>
+        <div class="rec-log" id="recLog" aria-live="polite"></div>
+        <div class="rec-suggestions" id="recSuggestions">
+          <button type="button">sushi in NYC</button>
+          <button type="button">cafes in Pittsburgh</button>
+          <button type="button">dessert in Japan</button>
+        </div>
+        <form class="rec-form" id="recForm">
+          <input id="recInput" type="text" autocomplete="off" maxlength="500"
+                 placeholder="a city + a cuisine, e.g. tapas in San Sebastián"
+                 aria-label="Ask for a restaurant rec" />
+          <button type="submit">Send</button>
+        </form>
+      </section>
+
       <!-- "ABOUT" tent card on the desk -->
       <a class="hotspot about" href="about.html" style="--x:598; --y:618; --w:165; --h:80" aria-label="About"></a>
 
@@ -135,6 +158,6 @@
     </div>
   </div>
 
-  <script src="js/script.js?v=5"></script>
+  <script src="js/script.js?v=6"></script>
 </body>
 </html>

@@ -396,6 +396,252 @@ html, body {
 }
 
 /* ------------------------------------------------------------------
+   "Need a restaurant rec?" bubble
+   Sits in the gap between Emma's hair and the whiteboard's left leg
+   (x 668), with the tail pointing back down at her.
+------------------------------------------------------------------- */
+.rec-bubble {
+  position: absolute;
+  left: 392px;
+  top: 118px;
+  padding: 10px 16px;
+  font: 500 20px/1.2 var(--font);
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  border-radius: 18px 22px 20px 24px / 22px 18px 24px 20px;
+  cursor: pointer;
+  z-index: 4;
+  animation: rec-bob 3s ease-in-out infinite;
+  transition: background 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rec-bubble:hover,
+.rec-bubble:focus-visible,
+.rec-bubble[aria-expanded="true"] {
+  background: #f2f2f6;
+  outline: none;
+}
+
+.rec-bubble:focus-visible {
+  outline: 3px dashed var(--ink);
+  outline-offset: 5px;
+}
+
+/* tail, leaning down-left toward Emma's head */
+.rec-bubble::before,
+.rec-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  border-style: solid;
+  border-color: transparent;
+}
+
+.rec-bubble::before {
+  left: 18px;
+  border-width: 22px 22px 0 0;
+  border-top-color: var(--ink);
+}
+
+.rec-bubble::after {
+  left: 21px;
+  border-width: 15px 15px 0 0;
+  border-top-color: var(--paper);
+}
+
+.rec-bubble:hover::after,
+.rec-bubble:focus-visible::after,
+.rec-bubble[aria-expanded="true"]::after { border-top-color: #f2f2f6; }
+
+@keyframes rec-bob {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -5px; }
+}
+
+/* ------------------------------------------------------------------
+   Restaurant rec chat
+   On the board it takes the notes' place (x 700-1505, y 160-500) and
+   the board title switches to "Restaurant recs". When the scene is
+   scaled too small to type into, JS moves it out of the scene and it
+   opens as a full-screen sheet instead (.is-sheet).
+------------------------------------------------------------------- */
+.board-notes[hidden],
+.rec-chat[hidden] { display: none; }
+
+.rec-chat {
+  position: absolute;
+  left: 700px;
+  top: 160px;
+  width: 805px;
+  height: 336px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--ink);
+  font-family: var(--font);
+  z-index: 3;
+}
+
+.rec-heading { display: none; }
+
+.rec-close {
+  position: absolute;
+  right: 0;
+  top: -62px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 30px/1 var(--font);
+  cursor: pointer;
+}
+
+.rec-close:hover,
+.rec-close:focus-visible { background: #f2f2f6; outline: none; }
+
+.rec-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 14px 4px 2px;
+}
+
+/* same inked scroll bar as the notes */
+.rec-log::-webkit-scrollbar { width: 12px; }
+.rec-log::-webkit-scrollbar-track { background: var(--paper); border-left: 1.5px solid var(--ink); }
+.rec-log::-webkit-scrollbar-thumb { background: var(--ink); border: 3px solid var(--paper); border-radius: 6px; }
+
+@supports not selector(::-webkit-scrollbar) {
+  .rec-log { scrollbar-width: thin; scrollbar-color: var(--ink) var(--paper); }
+}
+
+.rec-msg {
+  max-width: 78%;
+  padding: 10px 14px;
+  font-size: 17px;
+  line-height: 1.35;
+  border: 2.5px solid var(--ink);
+  border-radius: 16px 20px 18px 22px / 20px 16px 22px 18px;
+  overflow-wrap: anywhere;
+}
+
+.rec-msg.from-emma { align-self: flex-start; background: var(--paper); }
+.rec-msg.from-visitor { align-self: flex-end; background: var(--ink); color: var(--paper); }
+.rec-msg.is-thinking { font-style: italic; opacity: 0.7; }
+
+.rec-places {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.rec-places li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1.5px dashed var(--ink);
+}
+
+.rec-score {
+  flex: none;
+  min-width: 36px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rec-name { font-weight: 600; }
+.rec-meta { display: block; font-size: 0.82em; opacity: 0.75; }
+
+.rec-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rec-suggestions[hidden] { display: none; }
+
+.rec-suggestions button {
+  padding: 6px 12px;
+  font: 400 15px/1 var(--font);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.rec-suggestions button:hover,
+.rec-suggestions button:focus-visible { background: #f2f2f6; outline: none; }
+
+.rec-form {
+  display: flex;
+  gap: 10px;
+}
+
+.rec-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  font: 400 17px/1.2 var(--font);
+  color: var(--ink);
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  border-radius: 14px 18px 16px 20px / 18px 14px 20px 16px;
+}
+
+.rec-form input:focus { outline: 3px dashed var(--ink); outline-offset: 3px; }
+
+.rec-form button {
+  padding: 10px 20px;
+  font: 600 17px/1 var(--font);
+  color: var(--paper);
+  background: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 18px 14px 20px 16px / 14px 18px 16px 20px;
+  cursor: pointer;
+}
+
+.rec-form button:disabled { opacity: 0.5; cursor: wait; }
+
+/* Full-screen sheet for small windows (phones) */
+.rec-chat.is-sheet {
+  position: fixed;
+  inset: 0;
+  width: auto;
+  height: auto;
+  padding: 16px;
+  background: var(--paper);
+  z-index: 10;
+}
+
+.rec-chat.is-sheet .rec-heading {
+  display: block;
+  margin: 4px 56px 4px 0;
+  font: 400 26px/1.2 var(--font);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.rec-chat.is-sheet .rec-close { top: 12px; right: 16px; }
+.rec-chat.is-sheet .rec-msg { max-width: 88%; font-size: 16px; }
+/* 16px+ keeps iOS from zooming into the field */
+.rec-chat.is-sheet .rec-form input,
+.rec-chat.is-sheet .rec-form button { font-size: 16px; }
+
+/* ------------------------------------------------------------------
    Missing-frames notice (only shows if images can't load)
 ------------------------------------------------------------------- */
 .missing-frames {
@@ -420,6 +666,6 @@ html, body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bubble { animation: none; }
-  .app { transition: none; }
+  .bubble, .rec-bubble { animation: none; }
+  .app, .rec-bubble { transition: none; }
 }
