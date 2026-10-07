@@ -3,8 +3,8 @@
 Internal dashboard for Andean employees. It collects to-dos from three places into one list:
 
 - **Dashboard:** to-dos you add yourself or that coworkers send you *(Phase 1, built)*
-- **Notion:** tasks assigned to you *(Phase 3)*
-- **Slack:** threads that @mention you with a request *(Phase 4–5)*
+- **Notion:** tasks assigned to you in a Notion tasks database. Checking one off on the dashboard marks it done in Notion.
+- **Slack:** messages and threads that @mention you show up as *suggested* to-dos you can accept or dismiss. The "Add to dashboard" message shortcut saves any message as a to-do.
 
 Employees sign in with their Andean Microsoft (Outlook) account. The password is entered on Microsoft's page, so this app never sees or stores it.
 
@@ -32,9 +32,37 @@ Run the tests with `.venv/bin/python -m pytest`.
    - `MS_TENANT_ID`: Directory (tenant) ID
    - `MS_CLIENT_ID`: Application (client) ID
    - `MS_CLIENT_SECRET`: the secret value
-4. Optional: set `ALLOWED_EMAIL_DOMAINS` (e.g. `andean.com`) and `ADMIN_EMAILS`.
+4. Optional: set `ALLOWED_EMAIL_DOMAINS` (e.g. `andean.systems`) and `ADMIN_EMAILS`.
 
 Only accounts in the Andean tenant can sign in. An employee record is created the first time someone signs in.
+
+## Slack setup
+
+1. Go to https://api.slack.com/apps → **Create New App → From an app manifest**, pick the workspace, paste [`slack-manifest.yml`](slack-manifest.yml), click **Create**, then **Install to Workspace → Allow**.
+2. Copy three values into `.env`:
+   - **Basic Information → App Credentials → Signing Secret** → `SLACK_SIGNING_SECRET`
+   - **Basic Information → App-Level Tokens → Generate Token and Scopes**: name it `socket`, add the `connections:write` scope, and copy the `xapp-…` token → `SLACK_APP_TOKEN`
+   - **OAuth & Permissions → Bot User OAuth Token** (`xoxb-…`) → `SLACK_BOT_TOKEN`
+3. Restart the app. It connects over Socket Mode, so no public URL is needed.
+4. In every channel where requests happen, run `/invite @Andean Dashboard`. The bot only sees channels it has been invited to.
+5. Sign in to the dashboard with the same email as your Slack profile. That match is how mentions find you.
+
+**Production:** follow the comment at the top of the manifest. Set `socket_mode_enabled: false`, set the request URLs to `https://<BASE_URL>/slack/events` and `/slack/interactions`, and leave `SLACK_APP_TOKEN` unset. Installing in Andean's real workspace needs a Slack admin's approval.
+
+## Notion setup
+
+1. In the Notion workspace, open https://app.notion.com/developers/connections → **Build → Internal connections → Create a new connection** and pick the workspace.
+   - Under **Configuration**, enable **Read content**, **Update content** and **Insert content** (only the setup script needs Insert).
+   - Choose **Read user information including email addresses**. Without it, assignees can't be matched to employees.
+   - Copy the API token into `.env` as `NOTION_TOKEN`.
+2. Create a page (e.g. "Dashboard Sandbox"), open **••• → Connections → + Add connection**, and choose your connection.
+3. Build a seeded Tasks database (Name, Assignee, Status, Due) under that page:
+   ```bash
+   .venv/bin/python scripts/setup_notion_sandbox.py --parent-page "<page URL>" --email <your Notion email>
+   ```
+4. Add the printed `NOTION_TASKS_DATABASE_ID=…` line to `.env` and restart. Tasks sync every 2 minutes, or right away with **Sync Notion** on the dashboard.
+
+For an existing database, skip the script. Share the database with the connection, put its URL or ID in `NOTION_TASKS_DATABASE_ID`, and set `NOTION_ASSIGNEE_PROPERTY` / `NOTION_STATUS_PROPERTY` / `NOTION_DUE_PROPERTY` if its columns are named differently.
 
 ## How it's built
 
@@ -46,15 +74,19 @@ Only accounts in the Andean tenant can sign in. An employee record is created th
 |---|---|
 | `app/auth.py` | Microsoft OIDC login, sessions, CSRF |
 | `app/todos.py` | To-do API: list, add, send to coworker, complete, delete |
+| `app/integrations/slack.py` | Slack events + "Add to dashboard" shortcut (Socket Mode or HTTP) |
+| `app/integrations/notion.py` | Notion sync and status push-back |
+| `app/integrations/common.py` | Maps Slack/Notion users to employees by email; upserts synced to-dos |
+| `scripts/setup_notion_sandbox.py` | Creates a seeded Tasks database in a sandbox Notion workspace |
 | `app/models.py` | `Employee` (with `slack_user_id` / `notion_user_id` for mapping) and `Todo` (with `source` / `source_id` / `source_url`) |
 
 ## Roadmap
 
 1. ~~Foundation: login, personal to-dos~~
 2. ~~Send to-dos to coworkers~~ · Direct messages between employees
-3. **Notion:** internal integration syncs tasks where Assignee = employee, with a link back to the page
-4. **Slack v1:** Slack app in the workspace; a thread that @mentions someone becomes a *suggested* to-do on their dashboard, plus an "Add to dashboard" message shortcut
-5. **Slack v2:** LLM check that a mention is actually a request, with Slack DM notifications when someone sends you a to-do
-6. Polish: live updates, two-way Notion status sync, admin page, Alembic migrations
+3. ~~**Notion:** assigned tasks sync in, check-offs sync back~~
+4. ~~**Slack v1:** @mentions become suggested to-dos; "Add to dashboard" shortcut~~
+5. **Slack v2:** LLM check that a mention is actually a request, and Slack DM notifications when someone sends you a to-do
+6. Polish: live updates, admin page, Alembic migrations, Microsoft sign-in in Andean's tenant
 
-**Slack note:** the bot only sees channels it has been invited to, so it must be added to the channels where requests happen. A Slack workspace admin has to approve installing the app.
+**Testing safely:** develop against a sandbox Slack workspace and sandbox Notion workspace you own, not Andean's real ones. Switching later only changes values in `.env`.

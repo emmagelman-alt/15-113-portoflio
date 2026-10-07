@@ -182,6 +182,21 @@ $("add-form").addEventListener("submit", async (e) => {
   }
 });
 
+$("sync-notion").addEventListener("click", async (e) => {
+  const button = e.currentTarget;
+  button.disabled = true;
+  button.textContent = "Syncing…";
+  try {
+    await api("/api/notion/sync", { method: "POST" });
+    await refresh();
+  } catch (ex) {
+    alert(ex.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Sync Notion";
+  }
+});
+
 $("logout").addEventListener("click", async () => {
   await api("/auth/logout", { method: "POST" }).catch(() => {});
   location.href = "/login";
@@ -192,6 +207,7 @@ $("logout").addEventListener("click", async () => {
   $("who").textContent = state.me.email;
   $("greeting").textContent = `Hi, ${state.me.name.split(" ")[0]}`;
   state.employees = await api("/api/employees");
+  fetch("/auth/config").then((r) => r.json()).then((cfg) => { $("sync-notion").hidden = !cfg.notion; }).catch(() => {});
   renderAssignees();
   await refresh();
   setInterval(() => { if (!document.hidden) refresh().catch(() => {}); }, 30000);

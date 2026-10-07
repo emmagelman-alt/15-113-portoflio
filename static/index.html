@@ -48,7 +48,10 @@
     </section>
 
     <section class="card" aria-labelledby="list-heading">
-      <h2 id="list-heading">My to-dos</h2>
+      <div class="card-head">
+        <h2 id="list-heading">My to-dos</h2>
+        <button class="btn btn-ghost btn-small" id="sync-notion" type="button" hidden>Sync Notion</button>
+      </div>
       <div class="tabs" id="tabs" role="toolbar" aria-label="Filter by source"></div>
       <ul class="todo-list" id="open-list"></ul>
       <p class="empty" id="empty" hidden>Nothing here. Nice work.</p>
