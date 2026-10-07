@@ -58,7 +58,7 @@ body {
 }
 
 a { color: inherit; }
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 [hidden] { display: none !important; }
 
@@ -311,3 +311,23 @@ body.panel-open { overflow: hidden; }
   .panel-body { padding: 16px 16px 32px; }
   .field input, .field select { min-width: 140px; }
 }
+
+/* Attachments */
+.composer-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pending-files, .files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 13px;
+  text-decoration: none;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+a.file-chip { padding-right: 10px; }
+.file-chip .icon-btn { font-size: 16px; padding: 0 4px; }
+.file-thumb img { display: block; max-width: 220px; max-height: 160px; border-radius: 8px; border: 1px solid var(--border); }

@@ -13,7 +13,7 @@ import json
 import logging
 import re
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
 from urllib.parse import parse_qs
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response
@@ -355,12 +355,41 @@ def reply_identity(db: Session) -> Optional[Employee]:
     return _employee(db, _client(), (ident or {}).get("user_id"))
 
 
-def post_reply(todo: Todo, text: str) -> None:
-    """Reply in the to-do's thread as the person who owns the user token. Raises SlackApiError."""
+def _bot_scopes(client: WebClient) -> Set[str]:
+    def fetch() -> Set[str]:
+        headers = getattr(client.auth_test(), "headers", None) or {}
+        return set((headers.get("x-oauth-scopes") or "").split(","))
+    return _cached("bot-scopes", fetch) or set()
+
+
+class ReplyFile(NamedTuple):
+    name: str
+    content_type: str
+    data: bytes
+    url: str  # where the dashboard serves it, used when Slack can't take the upload
+
+
+def post_reply(todo: Todo, text: str, *, author_name: str, as_user: bool, files: Sequence[ReplyFile] = ()) -> None:
+    """Reply in the to-do's thread. With the employee's user token the reply is theirs; otherwise
+    the bot posts it, signed with their name. Files upload to Slack when the bot has files:write,
+    otherwise they're listed as dashboard links. Raises SlackApiError."""
     channel, ts = _split(todo)
-    messages = _replies(_client(), channel, ts)
+    bot = _client()
+    messages = _replies(bot, channel, ts)
     root = messages[0]["ts"] if messages else ts
-    WebClient(token=settings.slack_user_token).chat_postMessage(channel=channel, thread_ts=root, text=text)
+    native = list(files) if files and "files:write" in _bot_scopes(bot) else []
+    body = text
+    linked = [f for f in files if f not in native]
+    if linked:
+        body = "\n".join([body] + [f"📎 {f.name}: {f.url}" for f in linked]).strip()
+    if not as_user:
+        body = f"*{author_name}* (via Andean Dashboard):\n{body or 'shared a file'}"
+    if body:
+        client = WebClient(token=settings.slack_user_token) if as_user else bot
+        client.chat_postMessage(channel=channel, thread_ts=root, text=body)
+    if native:
+        bot.files_upload_v2(channel=channel, thread_ts=root,
+                            file_uploads=[{"content": f.data, "filename": f.name, "title": f.name} for f in native])
 
 
 # --- HTTP transport ---

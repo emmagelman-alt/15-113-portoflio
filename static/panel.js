@@ -52,30 +52,89 @@ function message({ author, time, body, classes = "" }) {
     el("div", { class: "msg-text" }, body));
 }
 
-function composer({ placeholder, button, onSubmit }) {
+function fileSize(bytes) {
+  return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function filesEl(files) {
+  if (!files || !files.length) return null;
+  return el("div", { class: "files" }, ...files.map((f) => f.is_image
+    ? el("a", { class: "file-thumb", href: f.url, target: "_blank", rel: "noopener" }, el("img", { src: f.url, alt: f.name, loading: "lazy" }))
+    : el("a", { class: "file-chip", href: f.url, target: "_blank", rel: "noopener" }, `📎 ${f.name}`, f.size ? el("span", { class: "hint" }, ` ${fileSize(f.size)}`) : null)));
+}
+
+async function uploadFile(todoId, file) {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`/api/todos/${todoId}/attachments`, {
+    method: "POST", body: form, credentials: "same-origin", headers: { "X-CSRF-Token": state.me.csrf_token },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || "Upload failed.");
+  return data;
+}
+
+function composer({ placeholder, button, onSubmit, todoId, maxFiles = 10, note }) {
   const input = el("textarea", { rows: "2", placeholder, "aria-label": placeholder, maxlength: "4000" });
   const err = el("p", { class: "form-error", hidden: "" });
   const submit = el("button", { class: "btn btn-small", type: "submit" }, button);
+  const chips = el("div", { class: "pending-files" });
+  const picker = el("input", { type: "file", multiple: "", hidden: "" });
+  const attached = [];
+  let uploading = 0;
+
+  const showError = (message) => { err.textContent = message; err.hidden = !message; };
+  const renderChips = () => chips.replaceChildren(...attached.map((f) => el("span", { class: "file-chip" }, `📎 ${f.name}`,
+    el("button", { class: "icon-btn", type: "button", "aria-label": `Remove ${f.name}`,
+      onclick: () => { attached.splice(attached.indexOf(f), 1); renderChips(); } }, "×"))));
+
+  async function addFiles(list) {
+    showError("");
+    for (const file of list) {
+      if (attached.length + uploading >= maxFiles) { showError(`Attach up to ${maxFiles} files here.`); break; }
+      uploading += 1;
+      submit.disabled = true;
+      try {
+        attached.push(await uploadFile(todoId, file));
+        renderChips();
+      } catch (e) {
+        showError(`${file.name}: ${e.message}`);
+      } finally {
+        uploading -= 1;
+        submit.disabled = uploading > 0;
+      }
+    }
+  }
+
+  picker.addEventListener("change", () => { addFiles([...picker.files]); picker.value = ""; });
+  input.addEventListener("paste", (e) => {
+    const pasted = [...(e.clipboardData ? e.clipboardData.files : [])];
+    if (pasted.length) { e.preventDefault(); addFiles(pasted); }
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) form.requestSubmit();
+  });
+
   const form = el("form", {
     class: "composer",
     onsubmit: async (e) => {
       e.preventDefault();
       const text = input.value.trim();
-      if (!text) return;
+      if ((!text && !attached.length) || uploading) return;
       submit.disabled = true;
-      err.hidden = true;
+      showError("");
       try {
-        await onSubmit(text);
+        await onSubmit(text, attached.map((f) => f.id));
       } catch (ex) {
-        err.textContent = ex.message;
-        err.hidden = false;
+        showError(ex.message);
         submit.disabled = false;
       }
     },
-  }, input, el("div", { class: "composer-row" }, el("span", { class: "hint" }, "⌘↵ to send"), submit), err);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) form.requestSubmit();
-  });
+  }, input, chips, el("div", { class: "composer-row" },
+    el("div", { class: "composer-tools" },
+      el("button", { class: "btn btn-ghost btn-small", type: "button", onclick: () => picker.click() }, "📎 Attach"),
+      el("span", { class: "hint" }, note || "⌘↵ to send")),
+    submit), picker, err);
   return form;
 }
 
@@ -108,7 +167,7 @@ async function panelDismiss() {
   }
 }
 
-const post = (path, text) => api(path, { method: "POST", body: JSON.stringify({ text }) }).then(loadPanel);
+const post = (path, text, ids) => api(path, { method: "POST", body: JSON.stringify({ text, attachment_ids: ids }) }).then(loadPanel);
 
 /* ---------- Sections ---------- */
 
@@ -147,10 +206,12 @@ function slackSection(d) {
     classes: m.highlight ? "highlight" : "",
     body: el("span", {}, linkify(m.text), ...m.files.map((f) => el("span", { class: "msg-file" }, link(f.url, `📎 ${f.name}`)))),
   })));
+  const asYou = s.reply_as === "you";
   const reply = s.can_reply
-    ? composer({ placeholder: "Reply in the thread…", button: "Reply as you",
-      onSubmit: (text) => post(`/api/todos/${d.todo.id}/slack-reply`, text) })
-    : s.reply_hint ? el("p", { class: "hint" }, s.reply_hint) : null;
+    ? composer({ placeholder: "Reply in the thread…", button: asYou ? "Reply as you" : "Reply", todoId: d.todo.id,
+      note: asYou ? "⌘↵ to send" : "Posts as Andean Dashboard, signed with your name",
+      onSubmit: (text, ids) => post(`/api/todos/${d.todo.id}/slack-reply`, text, ids) })
+    : null;
   return section(s.channel_name ? `Thread in #${s.channel_name}` : "Slack thread", list, reply);
 }
 
@@ -197,13 +258,14 @@ function notionSections(d) {
   const comments = n.comments_error
     ? el("p", { class: "hint" }, n.comments_error)
     : el("ol", { class: "thread" }, ...(n.comments.length
-      ? n.comments.map((c) => message({ author: c.author, time: c.created_at, body: renderSpans(c.spans) }))
+      ? n.comments.map((c) => message({ author: c.author, time: c.created_at,
+        body: el("span", {}, renderSpans(c.spans), ...(c.files || []).map((f) => el("span", { class: "msg-file" }, link(f.url, `📎 ${f.name}`)))) }))
       : [el("li", { class: "muted" }, "No comments yet.")]));
   return [
     section("Notion page", renderBlocks(n.blocks, n.more_blocks)),
     section("Comments", comments, d.is_owner && !n.comments_error
-      ? composer({ placeholder: "Comment on the Notion page…", button: "Comment",
-        onSubmit: (text) => post(`/api/todos/${d.todo.id}/notion-comments`, text) })
+      ? composer({ placeholder: "Comment on the Notion page…", button: "Comment", todoId: d.todo.id, maxFiles: 3,
+        onSubmit: (text, ids) => post(`/api/todos/${d.todo.id}/notion-comments`, text, ids) })
       : null),
   ];
 }
@@ -212,11 +274,12 @@ function commentsSection(d) {
   const other = d.is_owner ? d.todo.created_by : d.todo.owner;
   const name = other && other.id !== state.me.id ? other.name.split(" ")[0] : null;
   const list = el("ol", { class: "thread" }, ...(d.comments.length
-    ? d.comments.map((c) => message({ author: c.is_me ? "You" : c.author, time: c.created_at, body: linkify(c.body), classes: c.is_me ? "mine" : "" }))
+    ? d.comments.map((c) => message({ author: c.is_me ? "You" : c.author, time: c.created_at,
+      body: el("span", {}, linkify(c.body), filesEl(c.files)), classes: c.is_me ? "mine" : "" }))
     : [el("li", { class: "muted" }, name ? `Ask ${name} a question, or reply with a link to what you made.` : "Add notes for yourself.")]));
   return section(name ? `Conversation with ${name}` : "Notes", list,
-    composer({ placeholder: name ? `Message ${name}…` : "Add a note…", button: "Send",
-      onSubmit: (text) => post(`/api/todos/${d.todo.id}/comments`, text) }));
+    composer({ placeholder: name ? `Message ${name}…` : "Add a note…", button: "Send", todoId: d.todo.id,
+      onSubmit: (text, ids) => post(`/api/todos/${d.todo.id}/comments`, text, ids) }));
 }
 
 function previewHead(item, box) {
@@ -314,4 +377,8 @@ $("panel-close").addEventListener("click", closePanel);
 $("panel-backdrop").addEventListener("click", closePanel);
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && panel.id !== null) closePanel();
+});
+window.addEventListener("hashchange", () => {
+  const linked = location.hash.match(/^#todo-(\d+)$/);
+  if (linked && Number(linked[1]) !== panel.id) openPanel(Number(linked[1]));
 });

@@ -7,9 +7,10 @@ Internal dashboard for Andean employees. It collects to-dos from three places in
 - **Slack:** messages and threads that @mention you show up as *suggested* to-dos you can accept or dismiss. The "Add to dashboard" message shortcut saves any message as a to-do.
 
 **Click any to-do** to open its task panel and work on it without leaving the dashboard:
-- **Slack:** the full thread, with a reply box that posts in the thread as you.
+- **Slack:** the full thread, with a reply box. Replies post as you when your Slack user token is set; otherwise they post as the Andean Dashboard bot, signed with your name.
 - **Notion:** the page's content and comments. Change the status or due date (written back to Notion) and add comments.
 - **From a coworker:** a conversation with the person who sent it.
+- **Attach files** (📎 or paste) to any reply, up to 10 MB each. Coworker conversations show them inline; Notion comments get them as real Notion attachments (up to 3); Slack replies upload them when the app has `files:write`, otherwise they include a link to the file on the dashboard.
 - **Linked docs:** Figma files and Google Docs/Sheets/Slides preview inline. Linked Notion pages render inside the panel when they're shared with the connection.
 
 Employees sign in with their Andean Microsoft (Outlook) account. The password is entered on Microsoft's page, so this app never sees or stores it.

@@ -61,7 +61,8 @@ class FakeNotion:
 
     def __call__(self, request):
         path = request.url.path[len("/v1"):]
-        body = json.loads(request.content) if request.content else {}
+        is_json = request.headers.get("content-type", "").startswith("application/json")
+        body = json.loads(request.content) if request.content and is_json else {}
         self.calls.append((request.method, path))
         assert request.headers["Notion-Version"] == notion.NOTION_VERSION
         assert request.headers["Authorization"] == "Bearer secret_test"
@@ -103,6 +104,13 @@ class FakeNotion:
             if self.comments_status != 200:
                 return httpx.Response(self.comments_status, json={"code": "restricted_resource", "message": "no"})
             return httpx.Response(200, json={"results": self.comments, "has_more": False})
+        if request.method == "POST" and path == "/file_uploads":
+            self.comment_posts.append(("create_upload", body))
+            return httpx.Response(200, json={"object": "file_upload", "id": f"fu{len(self.comment_posts)}", "status": "pending"})
+        if request.method == "POST" and path.startswith("/file_uploads/") and path.endswith("/send"):
+            assert request.headers["content-type"].startswith("multipart/form-data")
+            self.comment_posts.append(("send", path.split("/")[2]))
+            return httpx.Response(200, json={"object": "file_upload", "status": "uploaded"})
         if request.method == "POST" and path == "/comments":
             self.comment_posts.append(body)
             return httpx.Response(200, json={"object": "comment"})
@@ -372,4 +380,11 @@ def test_update_page_and_comment(fake):
 
     notion.add_comment("p1", "Uploaded v2", "Emma Gelman")
     assert fake.comment_posts[-1]["display_name"] == {"type": "custom", "custom": {"name": "Emma Gelman (via Dashboard)"}}
-    assert fake.comment_posts[-1]["parent"] == {"page_id": "p1"}
+    assert fake.comment_posts[-1]["parent"] == {"page_id": "p1"} and "attachments" not in fake.comment_posts[-1]
+
+    fake.comment_posts.clear()
+    notion.add_comment("p1", "", "Emma Gelman", [("v2.png", "image/png", b"png")])
+    create, send, comment = fake.comment_posts
+    assert create == ("create_upload", {"filename": "v2.png", "content_type": "image/png"}) and send == ("send", "fu1")
+    assert comment["attachments"] == [{"type": "file_upload", "file_upload_id": "fu1"}]
+    assert comment["rich_text"][0]["text"]["content"] == "📎 v2.png"

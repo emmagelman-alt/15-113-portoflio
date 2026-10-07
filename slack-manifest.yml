@@ -33,7 +33,8 @@ oauth_config:
       - groups:read
       - users:read         # names for @mentions
       - users:read.email   # emails, to match Slack users to employees
-      - chat:write         # ephemeral "Saved to your dashboard" confirmations
+      - chat:write         # confirmations, and task-panel replies when no user token is set
+      - files:write        # files attached to task-panel replies (otherwise they're sent as dashboard links)
       - commands           # the message shortcut
     user:
       - chat:write         # replies from the task panel post as the employee

@@ -60,6 +60,9 @@ class FakeSlack:
     def chat_postMessage(self, **kwargs):
         self.posted.append(kwargs)
 
+    def files_upload_v2(self, **kwargs):
+        self.posted.append(("upload", kwargs))
+
     def chat_postEphemeral(self, **kwargs):
         self.replies.append(kwargs["text"])
 
@@ -298,9 +301,24 @@ def test_thread_for_task_panel(fake):
     assert bot["is_bot"] and bot["author"] == "Andean Dashboard"
 
 
-def test_reply_posts_in_thread_as_user(fake, monkeypatch):
+def test_reply_posts_in_thread(fake, monkeypatch):
     from app.models import Todo
-    monkeypatch.setattr(slack, "settings", dataclasses.replace(slack.settings, slack_user_token="xoxp-test"))
+    todo = Todo(source="slack", source_id="C1:2.0")
     fake.thread = [{"ts": "1.0", "thread_ts": "1.0", "user": "USAM", "text": "root"}]
-    slack.post_reply(Todo(source="slack", source_id="C1:2.0"), "On it")
-    assert fake.posted == [{"channel": "C1", "thread_ts": "1.0", "text": "On it"}]
+    file = slack.ReplyFile("mock.png", "image/png", b"png", "https://dash.test/files/7/mock.png")
+
+    # As the employee (their user token)
+    slack.post_reply(todo, "On it", author_name="Emma Gelman", as_user=True)
+    assert fake.posted[-1] == {"channel": "C1", "thread_ts": "1.0", "text": "On it"}
+
+    # Via the bot, signed; without files:write the file becomes a dashboard link
+    slack.post_reply(todo, "Here you go", author_name="Emma Gelman", as_user=False, files=[file])
+    assert fake.posted[-1]["text"] == ("*Emma Gelman* (via Andean Dashboard):\nHere you go\n"
+                                       "📎 mock.png: https://dash.test/files/7/mock.png")
+
+    # With files:write the file is uploaded into the thread instead
+    monkeypatch.setitem(slack._cache, "bot-scopes", (float("inf"), {"chat:write", "files:write"}))
+    slack.post_reply(todo, "", author_name="Emma Gelman", as_user=False, files=[file])
+    assert fake.posted[-2]["text"] == "*Emma Gelman* (via Andean Dashboard):\nshared a file"
+    kind, upload = fake.posted[-1]
+    assert kind == "upload" and upload["thread_ts"] == "1.0" and upload["file_uploads"][0]["filename"] == "mock.png"

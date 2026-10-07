@@ -15,7 +15,7 @@ import time
 from concurrent.futures import Future, ThreadPoolExecutor
 from contextlib import suppress
 from datetime import date, datetime, timezone
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -440,6 +440,8 @@ def page_detail(page_ref: str, with_comments: bool = True) -> Dict[str, Any]:
                     "author": (c.get("display_name") or {}).get("resolved_name")
                               or _user_name(client, (c.get("created_by") or {}).get("id"), names),
                     "spans": spans(c.get("rich_text")),
+                    "files": [{"name": f"{(a.get('category') or 'file').title()} {i}", "url": (a.get("file") or {}).get("url")}
+                              for i, a in enumerate(c.get("attachments") or [], 1) if (a.get("file") or {}).get("url")],
                     "created_at": c.get("created_time"),
                 } for c in data.get("results") or []]
             except NotionError as exc:
@@ -466,14 +468,27 @@ def update_page(page_id: str, *, status: Any = _UNSET, due_date: Any = _UNSET) -
         return {"done": page_done(page, _done_names(props)), "due_date": page_due(page)}
 
 
-def add_comment(page_id: str, text: str, author_name: str) -> None:
-    """Comment on the page, labelled with the employee's name (needs Insert comments)."""
+MAX_COMMENT_FILES = 3  # Notion's limit per comment
+
+
+def add_comment(page_id: str, text: str, author_name: str,
+                files: Sequence[Tuple[str, str, bytes]] = ()) -> None:
+    """Comment on the page, labelled with the employee's name (needs Insert comments).
+    `files` are (name, content type, bytes), uploaded to Notion and attached to the comment."""
     with make_client() as client:
-        api(client, "POST", "/comments", json={
+        attachments = []
+        for name, content_type, data in files[:MAX_COMMENT_FILES]:
+            upload = api(client, "POST", "/file_uploads", json={"filename": name, "content_type": content_type})
+            api(client, "POST", f"/file_uploads/{upload['id']}/send", files={"file": (name, data, content_type)})
+            attachments.append({"type": "file_upload", "file_upload_id": upload["id"]})
+        body: Dict[str, Any] = {
             "parent": {"page_id": notion_id(page_id)},
-            "rich_text": [{"type": "text", "text": {"content": text}}],
+            "rich_text": [{"type": "text", "text": {"content": text or "📎 " + ", ".join(f[0] for f in files)}}],
             "display_name": {"type": "custom", "custom": {"name": f"{author_name} (via Dashboard)"}},
-        })
+        }
+        if attachments:
+            body["attachments"] = attachments
+        api(client, "POST", "/comments", json=body)
 
 
 # --- Push ---------------------------------------------------------------------------
