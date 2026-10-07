@@ -52,6 +52,10 @@ function dueLabel(iso) {
   return { text, overdue: days < 0 };
 }
 
+function titleButton(t) {
+  return el("button", { class: "text todo-title", type: "button", onclick: () => openPanel(t.id) }, t.title);
+}
+
 function todoItem(t, { readOnly = false, suggested = false } = {}) {
   const meta = el("div", { class: "meta" }, el("span", { class: `badge badge-${t.source}` }, SOURCE_LABEL[t.source] || t.source));
   if (readOnly) meta.append(el("span", {}, `To ${t.owner.name}`), el("span", {}, t.status === "done" ? "✓ Done" : "Open"));
@@ -65,7 +69,7 @@ function todoItem(t, { readOnly = false, suggested = false } = {}) {
 
   const li = el("li", { class: `todo${t.status === "done" ? " done" : ""}` });
   if (suggested) {
-    li.append(el("div", { class: "body" }, el("div", { class: "text" }, t.title), meta),
+    li.append(el("div", { class: "body" }, titleButton(t), meta),
       el("div", { class: "actions" },
         el("button", { class: "btn", type: "button", onclick: () => setStatus(t, "open") }, "Accept"),
         el("button", { class: "btn btn-ghost", type: "button", onclick: () => dismiss(t) }, "Dismiss")));
@@ -79,7 +83,7 @@ function todoItem(t, { readOnly = false, suggested = false } = {}) {
       onchange: (e) => setStatus(t, e.target.checked ? "done" : "open"),
     }));
   }
-  li.append(el("div", { class: "body" }, el("div", { class: "text" }, t.title), meta));
+  li.append(el("div", { class: "body" }, titleButton(t), meta));
   if (!readOnly) li.append(el("button", { class: "icon-btn", type: "button", title: "Delete", "aria-label": `Delete "${t.title}"`, onclick: () => remove(t) }, "×"));
   return li;
 }
@@ -211,4 +215,6 @@ $("logout").addEventListener("click", async () => {
   renderAssignees();
   await refresh();
   setInterval(() => { if (!document.hidden) refresh().catch(() => {}); }, 30000);
+  const linked = location.hash.match(/^#todo-(\d+)$/);
+  if (linked) openPanel(Number(linked[1]));
 })();

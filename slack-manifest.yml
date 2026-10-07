@@ -35,6 +35,8 @@ oauth_config:
       - users:read.email   # emails, to match Slack users to employees
       - chat:write         # ephemeral "Saved to your dashboard" confirmations
       - commands           # the message shortcut
+    user:
+      - chat:write         # replies from the task panel post as the employee
 settings:
   event_subscriptions:
     # request_url: https://dashboard.example.com/slack/events

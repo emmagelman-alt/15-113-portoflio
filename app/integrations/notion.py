@@ -359,6 +359,123 @@ async def shutdown() -> None:
         _executor = None
 
 
+# --- Task panel: page content, comments, edits ---------------------------------------
+
+TEXT_BLOCKS = ("paragraph", "heading_1", "heading_2", "heading_3", "bulleted_list_item",
+               "numbered_list_item", "to_do", "quote", "callout", "toggle", "code")
+LINK_BLOCKS = ("bookmark", "embed", "link_preview", "video", "pdf", "file")
+_UNSET: Any = object()
+
+
+def spans(rich_text: Optional[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    """Rich text as [{text, href}] for the front end to render safely."""
+    return [{"text": rt.get("plain_text", ""), "href": rt.get("href")} for rt in rich_text or []]
+
+
+def _block(block: Dict[str, Any]) -> Dict[str, Any]:
+    kind = block.get("type", "")
+    data = block.get(kind) or {}
+    if kind in TEXT_BLOCKS:
+        return {"type": kind, "spans": spans(data.get("rich_text")), "checked": data.get("checked")}
+    if kind in LINK_BLOCKS or kind == "image":
+        url = data.get("url") or (data.get(data.get("type", "")) or {}).get("url")
+        return {"type": "image" if kind == "image" else "link", "url": url, "spans": spans(data.get("caption"))}
+    if kind == "child_page":
+        return {"type": "paragraph", "spans": [{"text": "📄 " + data.get("title", ""), "href": None}]}
+    if kind == "divider":
+        return {"type": "divider"}
+    return {"type": "unsupported", "name": kind.replace("_", " ")}
+
+
+def _user_name(client: httpx.Client, user_id: Optional[str], cache: Dict[str, str]) -> str:
+    if not user_id:
+        return "Someone"
+    if user_id not in cache:
+        try:
+            cache[user_id] = api(client, "GET", f"/users/{user_id}").get("name") or "Someone"
+        except NotionError:
+            cache[user_id] = "Someone"
+    return cache[user_id]
+
+
+def _status_choices(prop: Optional[Dict[str, Any]]) -> List[str]:
+    kind = (prop or {}).get("type")
+    if kind == "checkbox":
+        return ["Not done", "Done"]
+    return [o["name"] for o in _status_options(prop)[0]] if kind in ("status", "select") else []
+
+
+def _status_name(page: Dict[str, Any]) -> Optional[str]:
+    prop = (page.get("properties") or {}).get(settings.notion_status_property) or {}
+    if prop.get("type") == "checkbox":
+        return "Done" if prop.get("checkbox") else "Not done"
+    return ((prop.get(prop.get("type", "")) or {}).get("name")) if prop.get("type") in ("status", "select") else None
+
+
+def page_detail(page_ref: str, with_comments: bool = True) -> Dict[str, Any]:
+    """A Notion page for the task panel: properties, top-level content, and comments."""
+    page_id = notion_id(page_ref)
+    with make_client() as client:
+        page = api(client, "GET", f"/pages/{page_id}")
+        blocks = api(client, "GET", f"/blocks/{page_id}/children", params={"page_size": 100})
+        props: Dict[str, Any] = {}
+        parent = page.get("parent") or {}
+        if parent.get("data_source_id") or parent.get("database_id"):
+            with suppress(NotionError):
+                props = schema(client, data_source_id(client))
+        names: Dict[str, str] = {}
+        out: Dict[str, Any] = {
+            "title": page_title(page), "url": page.get("url"),
+            "status": _status_name(page), "status_options": _status_choices(props.get(settings.notion_status_property)),
+            "due_date": page_due(page),
+            "assignees": [p.get("name") or _user_name(client, p.get("id"), names) for p in page_assignees(page)],
+            "blocks": [_block(b) for b in blocks.get("results") or []],
+            "more_blocks": bool(blocks.get("has_more")),
+            "comments": None, "comments_error": None,
+        }
+        if with_comments:
+            try:
+                data = api(client, "GET", "/comments", params={"block_id": page_id, "page_size": 100})
+                out["comments"] = [{
+                    "author": (c.get("display_name") or {}).get("resolved_name")
+                              or _user_name(client, (c.get("created_by") or {}).get("id"), names),
+                    "spans": spans(c.get("rich_text")),
+                    "created_at": c.get("created_time"),
+                } for c in data.get("results") or []]
+            except NotionError as exc:
+                out["comments_error"] = ("Turn on the connection's Read comments capability to see comments."
+                                         if exc.status == 403 else str(exc))
+        return out
+
+
+def update_page(page_id: str, *, status: Any = _UNSET, due_date: Any = _UNSET) -> Dict[str, Any]:
+    """Set a task's status (an option name) and/or due date in Notion. Returns {done, due_date}."""
+    with make_client() as client:
+        props = schema(client, data_source_id(client))
+        changes: Dict[str, Any] = {}
+        if status is not _UNSET:
+            prop = props.get(settings.notion_status_property) or {}
+            if status not in _status_choices(prop):
+                raise NotionError(400, "bad_status", f"'{status}' isn't an option for {settings.notion_status_property}.")
+            kind = prop["type"]
+            changes[settings.notion_status_property] = (
+                {"checkbox": status == "Done"} if kind == "checkbox" else {kind: {"name": status}})
+        if due_date is not _UNSET:
+            changes[settings.notion_due_property] = {"date": {"start": due_date.isoformat()} if due_date else None}
+        page = api(client, "PATCH", f"/pages/{notion_id(page_id)}", json={"properties": changes})
+        return {"done": page_done(page, _done_names(props)), "due_date": page_due(page)}
+
+
+def add_comment(page_id: str, text: str, author_name: str) -> None:
+    """Comment on the page, labelled with the employee's name (needs Insert comments)."""
+    with make_client() as client:
+        api(client, "POST", "/comments", json={
+            "parent": {"page_id": notion_id(page_id)},
+            "rich_text": [{"type": "text", "text": {"content": text}}],
+            "display_name": {"type": "custom", "custom": {"name": f"{author_name} (via Dashboard)"}},
+        })
+
+
 # --- Push ---------------------------------------------------------------------------
 
 def _push(page_id: str, done: bool) -> None:

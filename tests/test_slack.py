@@ -32,6 +32,8 @@ class FakeSlack:
         self.calls = []
         self.replies = []
         self.permalink_fails = False
+        self.thread = []
+        self.posted = []
 
     def auth_test(self):
         return {"user_id": "UBOT", "url": "https://andean-sandbox.slack.com/"}
@@ -50,6 +52,13 @@ class FakeSlack:
         if self.permalink_fails:
             raise SlackApiError("channel_not_found", {"ok": False, "error": "channel_not_found"})
         return {"permalink": f"https://andean-sandbox.slack.com/archives/{channel}/p{message_ts.replace('.', '')}"}
+
+    def conversations_replies(self, channel, ts, limit):
+        self.calls.append(("conversations.replies", ts))
+        return {"messages": self.thread}
+
+    def chat_postMessage(self, **kwargs):
+        self.posted.append(kwargs)
 
     def chat_postEphemeral(self, **kwargs):
         self.replies.append(kwargs["text"])
@@ -270,3 +279,28 @@ def test_socket_mode_acks_then_dispatches(fake, monkeypatch):
 
     asyncio.run(slack.shutdown())
     assert client.closed and slack._socket is None
+
+
+def test_thread_for_task_panel(fake):
+    from app.models import Todo
+    fake.thread = [
+        {"ts": "1.0", "thread_ts": "1.0", "user": "USAM", "text": "Kickoff: *brief* in <https://docs.google.com/document/d/D1/edit|the doc>"},
+        {"ts": "2.0", "thread_ts": "1.0", "user": "USAM", "text": "<@UEMMA> can you do\nthe banners?",
+         "files": [{"name": "ref.png", "permalink": "https://files.test/ref"}]},
+        {"ts": "3.0", "thread_ts": "1.0", "bot_id": "B1", "bot_profile": {"name": "Andean Dashboard"}, "text": "Saved"},
+    ]
+    data = slack.thread(Todo(source="slack", source_id="C1:2.0"))
+    assert data["channel_name"] == "design"
+    first, request, bot = data["messages"]
+    assert first["text"] == "Kickoff: brief in the doc (https://docs.google.com/document/d/D1/edit)"
+    assert request["highlight"] and request["text"] == "@Emma can you do\nthe banners?"
+    assert request["author"] == "Sam Rivera" and request["files"] == [{"name": "ref.png", "url": "https://files.test/ref"}]
+    assert bot["is_bot"] and bot["author"] == "Andean Dashboard"
+
+
+def test_reply_posts_in_thread_as_user(fake, monkeypatch):
+    from app.models import Todo
+    monkeypatch.setattr(slack, "settings", dataclasses.replace(slack.settings, slack_user_token="xoxp-test"))
+    fake.thread = [{"ts": "1.0", "thread_ts": "1.0", "user": "USAM", "text": "root"}]
+    slack.post_reply(Todo(source="slack", source_id="C1:2.0"), "On it")
+    assert fake.posted == [{"channel": "C1", "thread_ts": "1.0", "text": "On it"}]

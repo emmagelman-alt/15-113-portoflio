@@ -39,6 +39,9 @@ class Settings:
     slack_bot_token: str = field(default_factory=lambda: os.getenv("SLACK_BOT_TOKEN", ""))
     slack_signing_secret: str = field(default_factory=lambda: os.getenv("SLACK_SIGNING_SECRET", ""))
     slack_app_token: str = field(default_factory=lambda: os.getenv("SLACK_APP_TOKEN", ""))
+    # User token (xoxp-) so replies from the task panel post as that person. Prototype:
+    # one person's token from the app page. Later: a per-employee "Connect Slack" flow.
+    slack_user_token: str = field(default_factory=lambda: os.getenv("SLACK_USER_TOKEN", ""))
 
     # Notion internal integration + the tasks database it syncs from
     notion_token: str = field(default_factory=lambda: os.getenv("NOTION_TOKEN", ""))

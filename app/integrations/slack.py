@@ -13,7 +13,7 @@ import json
 import logging
 import re
 import time
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import parse_qs
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response
@@ -289,6 +289,78 @@ def handle_interaction(payload: Dict[str, Any]) -> None:
     except Exception:
         logger.exception("Slack shortcut failed")
         _reply(client, payload, "Sorry, that message couldn't be added to your dashboard. Please try again.")
+
+
+# --- Task panel: read the thread, reply as the employee ---
+
+def _readable(client: WebClient, text: Optional[str]) -> str:
+    """Full message text for the panel: @names, plain URLs, Slack markup removed, newlines kept."""
+    def mention(m: re.Match) -> str:
+        user = _user(client, m.group(1))
+        return "@" + (_name(user) if user else m.group(2) or "someone")
+
+    def ref(m: re.Match) -> str:
+        target, label = m.group(1), m.group(2)
+        if target.startswith(("http://", "https://")):
+            return target if not label or label in target else f"{label} ({target})"
+        return _ref(m)
+
+    text = html.unescape(_REF.sub(ref, _USER_REF.sub(mention, text or "")))
+    for _ in range(2):
+        text = _FORMATTING.sub(r"\2", text)
+    return text.strip()
+
+
+def _split(todo: Todo) -> Tuple[str, str]:
+    channel, _, ts = (todo.source_id or "").partition(":")
+    if not channel or not ts:
+        raise ValueError("This to-do isn't linked to a Slack message.")
+    return channel, ts
+
+
+def _replies(client: WebClient, channel: str, ts: str) -> List[Dict[str, Any]]:
+    messages = client.conversations_replies(channel=channel, ts=ts, limit=100)["messages"]
+    root = messages[0].get("thread_ts") or messages[0]["ts"] if messages else ts
+    if messages and messages[0]["ts"] != root:  # ts was a reply; fetch from the top of the thread
+        messages = client.conversations_replies(channel=channel, ts=root, limit=100)["messages"]
+    return messages
+
+
+def thread(todo: Todo) -> Dict[str, Any]:
+    """The Slack thread a to-do came from, oldest first, with the request itself highlighted."""
+    channel, ts = _split(todo)
+    client = _client()
+    messages = _replies(client, channel, ts)
+    out = []
+    for m in messages:
+        bot_name = (m.get("bot_profile") or {}).get("name") or m.get("username")
+        user = None if bot_name else _user(client, m.get("user"))
+        out.append({
+            "ts": m["ts"],
+            "author": bot_name or _name(user, full=True),
+            "is_bot": bool(bot_name),
+            "text": _readable(client, m.get("text")),
+            "files": [{"name": f.get("name") or f.get("title") or "file", "url": f.get("permalink")}
+                      for f in m.get("files") or [] if f.get("permalink")],
+            "highlight": m["ts"] == ts,
+        })
+    return {"channel": channel, "channel_name": _channel_name(client, channel), "messages": out}
+
+
+def reply_identity(db: Session) -> Optional[Employee]:
+    """The employee whose Slack user token is configured, if any."""
+    if not settings.slack_user_token:
+        return None
+    ident = _cached("user-token", lambda: WebClient(token=settings.slack_user_token).auth_test().data)
+    return _employee(db, _client(), (ident or {}).get("user_id"))
+
+
+def post_reply(todo: Todo, text: str) -> None:
+    """Reply in the to-do's thread as the person who owns the user token. Raises SlackApiError."""
+    channel, ts = _split(todo)
+    messages = _replies(_client(), channel, ts)
+    root = messages[0]["ts"] if messages else ts
+    WebClient(token=settings.slack_user_token).chat_postMessage(channel=channel, thread_ts=root, text=text)
 
 
 # --- HTTP transport ---

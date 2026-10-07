@@ -54,3 +54,16 @@ class Todo(Base):
 
     owner: Mapped[Employee] = relationship(foreign_keys=[owner_id])
     created_by: Mapped[Optional[Employee]] = relationship(foreign_keys=[created_by_id])
+
+
+class TodoComment(Base):
+    """Conversation on a dashboard to-do between the person who sent it and its owner."""
+    __tablename__ = "todo_comments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    todo_id: Mapped[int] = mapped_column(ForeignKey("todos.id", ondelete="CASCADE"), index=True)
+    author_id: Mapped[Optional[int]] = mapped_column(ForeignKey("employees.id", ondelete="SET NULL"))
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    author: Mapped[Optional[Employee]] = relationship()

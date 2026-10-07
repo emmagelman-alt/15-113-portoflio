@@ -214,3 +214,100 @@ details summary { cursor: pointer; color: var(--muted); font-size: 14px; margin-
   .add-form { grid-template-columns: 1fr 1fr; }
   .add-form .field-title, .add-form button { grid-column: 1 / -1; }
 }
+
+/* ---------- Task panel ---------- */
+.todo-title {
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.todo-title:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+body.panel-open { overflow: hidden; }
+.panel-backdrop { position: fixed; inset: 0; background: rgba(0, 13, 25, 0.35); z-index: 20; }
+.panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(580px, 100vw);
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -8px 0 32px rgba(0, 13, 25, 0.18);
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-badges { display: flex; gap: 6px; align-items: center; flex: 1; }
+.panel-head .icon-btn { font-size: 24px; }
+.panel-body { overflow-y: auto; padding: 20px 24px 40px; flex: 1; }
+.panel-title { font-size: 20px; margin: 0 0 6px; overflow-wrap: anywhere; }
+.panel-meta { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+.panel-notes { white-space: pre-wrap; }
+.panel-footer { margin-top: 24px; font-size: 14px; }
+
+.chip { font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; }
+.chip-suggested { color: var(--text); background: var(--badge-slack); border-color: transparent; }
+.badge-doc { background: var(--badge-notion); text-transform: none; letter-spacing: 0; flex: none; }
+
+.panel-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; padding: 14px 0 18px; border-bottom: 1px solid var(--border); }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.field input, .field select { width: auto; min-width: 160px; color: var(--text); font-size: 14px; }
+
+.panel-section { padding: 18px 0 4px; }
+.panel-section h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 0 0 10px; }
+
+.thread { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.msg { padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); }
+.msg.highlight { border-left: 3px solid var(--accent); }
+.msg.mine { background: var(--badge-internal); border-color: transparent; }
+.msg-head { display: flex; gap: 8px; align-items: baseline; font-size: 13px; margin-bottom: 2px; }
+.msg-head time { color: var(--muted); font-size: 12px; }
+.msg-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.msg-file { display: block; margin-top: 4px; }
+
+.composer { margin-top: 10px; }
+.composer textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: var(--bg);
+  resize: vertical;
+  min-height: 64px;
+}
+.composer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+.hint { color: var(--muted); font-size: 13px; }
+
+.notion-blocks { font-size: 14px; }
+.notion-blocks p, .notion-blocks blockquote { margin: 0 0 8px; }
+.notion-blocks h4, .notion-blocks h5 { margin: 14px 0 6px; }
+.notion-blocks img { max-width: 100%; border-radius: 8px; }
+.notion-blocks blockquote { border-left: 3px solid var(--border); padding-left: 10px; color: var(--muted); }
+.notion-blocks pre { background: var(--bg); padding: 10px; border-radius: 8px; overflow-x: auto; }
+.callout { background: var(--bg); padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; }
+.notion-todo { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 6px; }
+
+.links { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.link-item { display: flex; gap: 10px; align-items: center; }
+.link-url { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.preview { margin-top: 12px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.preview-head { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.preview iframe { display: block; width: 100%; height: 440px; border: 0; background: var(--bg); }
+.preview > h4, .preview > .notion-blocks, .preview > p { margin-left: 12px; margin-right: 12px; }
+
+@media (max-width: 640px) {
+  .panel-body { padding: 16px 16px 32px; }
+  .field input, .field select { min-width: 140px; }
+}

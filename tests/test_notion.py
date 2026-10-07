@@ -54,6 +54,10 @@ class FakeNotion:
         self.fail = {}  # (method, path) -> status code, returned once
         self.on_query = None
         self.hide_trashed = True  # as the real API does
+        self.blocks = {}  # page id -> child blocks
+        self.comments = []
+        self.comments_status = 200
+        self.comment_posts = []
 
     def __call__(self, request):
         path = request.url.path[len("/v1"):]
@@ -84,7 +88,24 @@ class FakeNotion:
             return httpx.Response(200, json=person(self.users[path[7:]], path[7:]))
         if request.method == "PATCH" and path.startswith("/pages/"):
             self.patches.append((path[7:], body))
-            return httpx.Response(200, json={"object": "page"})
+            match = next((p for p in self.pages if p["id"] == path[7:]), None)
+            if match is None:
+                return httpx.Response(200, json={"object": "page"})
+            match["properties"].update({k: {"type": next(iter(v)), **v} for k, v in body["properties"].items()})
+            return httpx.Response(200, json=match)
+        if request.method == "GET" and path.startswith("/pages/"):
+            match = next((p for p in self.pages if p["id"] == path[7:]), None)
+            if match:
+                return httpx.Response(200, json={**match, "parent": {"type": "data_source_id", "data_source_id": DS_ID}})
+        if request.method == "GET" and path.startswith("/blocks/") and path.endswith("/children"):
+            return httpx.Response(200, json={"results": self.blocks.get(path.split("/")[2], []), "has_more": False})
+        if request.method == "GET" and path == "/comments":
+            if self.comments_status != 200:
+                return httpx.Response(self.comments_status, json={"code": "restricted_resource", "message": "no"})
+            return httpx.Response(200, json={"results": self.comments, "has_more": False})
+        if request.method == "POST" and path == "/comments":
+            self.comment_posts.append(body)
+            return httpx.Response(200, json={"object": "comment"})
         return httpx.Response(404, json={"code": "object_not_found", "message": "Not found"})
 
 
@@ -306,3 +327,49 @@ def test_background_loop_survives_errors(fake):
 
     asyncio.run(run())
     assert ("GET", f"/databases/{DB_ID}") in fake.calls
+
+
+def test_page_detail_for_task_panel(fake):
+    fake.pages = [page("p1", "Hero|banner", ["emma@andean.test"], status="In progress", due="2026-10-09")]
+    fake.users = {"u9": "sam@andean.test"}
+    fake.blocks = {"p1": [
+        {"type": "heading_2", "heading_2": {"rich_text": [{"plain_text": "Brief"}]}},
+        {"type": "paragraph", "paragraph": {"rich_text": [
+            {"plain_text": "Use the "}, {"plain_text": "Figma file", "href": "https://www.figma.com/design/F1/Hero"}]}},
+        {"type": "to_do", "to_do": {"rich_text": [{"plain_text": "Mobile"}], "checked": True}},
+        {"type": "image", "image": {"type": "external", "external": {"url": "https://img.test/a.png"}, "caption": []}},
+        {"type": "table", "table": {}},
+    ]}
+    fake.comments = [
+        {"created_by": {"id": "u9"}, "rich_text": [{"plain_text": "Any update?"}], "created_time": "2026-10-07T10:00:00Z"},
+        {"created_by": {"id": "bot"}, "display_name": {"type": "custom", "resolved_name": "Emma (via Dashboard)"},
+         "rich_text": [{"plain_text": "Soon"}], "created_time": "2026-10-07T11:00:00Z"},
+    ]
+    fake.users["u9"] = "sam@andean.test"
+    detail = notion.page_detail("p1")
+    assert detail["title"] == "Herobanner" and detail["status"] == "In progress"
+    assert detail["status_options"] == ["Not started", "In progress", "Shipped", "Done"]
+    assert detail["due_date"] == date(2026, 10, 9)
+    assert [b["type"] for b in detail["blocks"]] == ["heading_2", "paragraph", "to_do", "image", "unsupported"]
+    assert detail["blocks"][1]["spans"][1] == {"text": "Figma file", "href": "https://www.figma.com/design/F1/Hero"}
+    assert detail["blocks"][2]["checked"] and detail["blocks"][3]["url"] == "https://img.test/a.png"
+    assert [c["author"] for c in detail["comments"]][1] == "Emma (via Dashboard)"
+
+    fake.comments_status = 403
+    assert "Read comments" in notion.page_detail("p1")["comments_error"]
+
+
+def test_update_page_and_comment(fake):
+    fake.pages = [page("p1", "Hero", ["emma@andean.test"], status="Not started")]
+    result = notion.update_page("p1", status="Shipped", due_date=date(2026, 10, 20))
+    assert result == {"done": True, "due_date": date(2026, 10, 20)}  # "Shipped" is in the Complete group
+    assert fake.patches[-1][1] == {"properties": {"Status": {"status": {"name": "Shipped"}},
+                                                  "Due": {"date": {"start": "2026-10-20"}}}}
+    notion.update_page("p1", due_date=None)
+    assert fake.patches[-1][1] == {"properties": {"Due": {"date": None}}}
+    with pytest.raises(notion.NotionError):
+        notion.update_page("p1", status="Nope")
+
+    notion.add_comment("p1", "Uploaded v2", "Emma Gelman")
+    assert fake.comment_posts[-1]["display_name"] == {"type": "custom", "custom": {"name": "Emma Gelman (via Dashboard)"}}
+    assert fake.comment_posts[-1]["parent"] == {"page_id": "p1"}

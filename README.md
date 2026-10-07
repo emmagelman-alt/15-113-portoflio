@@ -6,6 +6,12 @@ Internal dashboard for Andean employees. It collects to-dos from three places in
 - **Notion:** tasks assigned to you in a Notion tasks database. Checking one off on the dashboard marks it done in Notion.
 - **Slack:** messages and threads that @mention you show up as *suggested* to-dos you can accept or dismiss. The "Add to dashboard" message shortcut saves any message as a to-do.
 
+**Click any to-do** to open its task panel and work on it without leaving the dashboard:
+- **Slack:** the full thread, with a reply box that posts in the thread as you.
+- **Notion:** the page's content and comments. Change the status or due date (written back to Notion) and add comments.
+- **From a coworker:** a conversation with the person who sent it.
+- **Linked docs:** Figma files and Google Docs/Sheets/Slides preview inline. Linked Notion pages render inside the panel when they're shared with the connection.
+
 Employees sign in with their Andean Microsoft (Outlook) account. The password is entered on Microsoft's page, so this app never sees or stores it.
 
 ## Run locally
@@ -46,13 +52,14 @@ Only accounts in the Andean tenant can sign in. An employee record is created th
 3. Restart the app. It connects over Socket Mode, so no public URL is needed.
 4. In every channel where requests happen, run `/invite @Andean Dashboard`. The bot only sees channels it has been invited to.
 5. Sign in to the dashboard with the same email as your Slack profile. That match is how mentions find you.
+6. **Replying from the task panel (optional):** under **OAuth & Permissions → User Token Scopes**, add `chat:write` (the manifest already includes it), click **Reinstall to Workspace**, and copy the **User OAuth Token** (`xoxp-…`) into `.env` as `SLACK_USER_TOKEN`. Replies then post as the person who owns that token. This is a one-person prototype; a per-employee "Connect Slack" flow comes later.
 
 **Production:** follow the comment at the top of the manifest. Set `socket_mode_enabled: false`, set the request URLs to `https://<BASE_URL>/slack/events` and `/slack/interactions`, and leave `SLACK_APP_TOKEN` unset. Installing in Andean's real workspace needs a Slack admin's approval.
 
 ## Notion setup
 
 1. In the Notion workspace, open https://app.notion.com/developers/connections → **Build → Internal connections → Create a new connection** and pick the workspace.
-   - Under **Configuration**, enable **Read content**, **Update content** and **Insert content** (only the setup script needs Insert).
+   - Under **Configuration**, enable **Read content**, **Update content** and **Insert content** (only the setup script needs Insert), plus **Read comments** and **Insert comments** for the task panel.
    - Choose **Read user information including email addresses**. Without it, assignees can't be matched to employees.
    - Copy the API token into `.env` as `NOTION_TOKEN`.
 2. Create a page (e.g. "Dashboard Sandbox"), open **••• → Connections → + Add connection**, and choose your connection.
@@ -74,6 +81,8 @@ For an existing database, skip the script. Share the database with the connectio
 |---|---|
 | `app/auth.py` | Microsoft OIDC login, sessions, CSRF |
 | `app/todos.py` | To-do API: list, add, send to coworker, complete, delete |
+| `app/details.py` | Task panel API: Slack thread and replies, Notion page/comments/edits, coworker conversation, linked-doc previews |
+| `static/panel.js` | The task panel UI |
 | `app/integrations/slack.py` | Slack events + "Add to dashboard" shortcut (Socket Mode or HTTP) |
 | `app/integrations/notion.py` | Notion sync and status push-back |
 | `app/integrations/common.py` | Maps Slack/Notion users to employees by email; upserts synced to-dos |
