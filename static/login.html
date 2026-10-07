@@ -5,31 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sign in · Andean Dashboard</title>
   <link rel="icon" href="/static/logomark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/style.css?v=2">
+  <link rel="stylesheet" href="/static/login/login.css">
 </head>
-<body class="login-page">
-  <main class="login-card">
-    <img class="mark" src="/static/logomark.svg" alt="Andean Systems">
-    <h1>Andean Dashboard</h1>
-    <p>Sign in with your Andean Microsoft account.</p>
+<body>
+  <div class="art" aria-hidden="true">
+    <div class="art-box"><img src="/static/login/art.svg" alt="" width="720" height="1024"></div>
+  </div>
 
-    <a id="ms-login" class="btn ms-btn" href="/auth/login">
-      <span class="ms-logo" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
-      Sign in with Microsoft
-    </a>
+  <main class="panel">
+    <form id="login-form" class="login" action="/auth/login" method="get" novalidate>
+      <h1>LOGIN</h1>
 
-    <div id="error" class="login-error" role="alert" hidden></div>
+      <div class="fields">
+        <label class="field" for="email">
+          <span class="label">Email</span>
+          <input id="email" name="email" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+          <img class="line" src="/static/login/line.svg" alt="" width="307.307" height="4">
+        </label>
 
-    <div id="dev-login" class="dev-login" hidden>
-      <label for="dev-email">Local development sign-in</label>
-      <form action="/auth/dev-login" method="get">
-        <input id="dev-email" type="email" name="email" placeholder="you@andean.systems" required>
-        <button class="btn btn-ghost" type="submit">Go</button>
-      </form>
-    </div>
+        <div class="field">
+          <span class="label">Password</span>
+          <button id="continue" class="continue" type="submit">
+            <span id="continue-text">Continue with Microsoft</span><span aria-hidden="true">→</span>
+          </button>
+          <img class="line" src="/static/login/line.svg" alt="" width="307.307" height="4">
+        </div>
+      </div>
 
-    <p class="fine-print">You'll enter your email and password on Microsoft's secure page. Andean Dashboard never sees your password.</p>
+      <div class="options">
+        <label class="remember">
+          <input id="remember" name="remember" type="checkbox" value="1">
+          <span class="tick" aria-hidden="true">
+            <img class="circle" src="/static/login/circle.svg" alt="" width="18.9044" height="18.9044">
+            <img class="check" src="/static/login/check.svg" alt="" width="13.1891" height="13.1891">
+          </span>
+          Remember me
+        </label>
+        <a class="forgot" href="https://passwordreset.microsoftonline.com/" target="_blank" rel="noopener noreferrer">Forgot?</a>
+      </div>
+
+      <p id="error" class="message error" role="alert" hidden></p>
+      <p id="note" class="message">You'll enter your password on Microsoft's secure page. The dashboard never sees it.</p>
+    </form>
   </main>
-  <script src="/static/login.js?v=2"></script>
+  <script src="/static/login.js?v=3"></script>
 </body>
 </html>

@@ -5,7 +5,9 @@ Employees sign in on Microsoft's own page with their Andean email and password
 """
 from __future__ import annotations
 
+import re
 import secrets
+import time
 from typing import Optional
 
 import msal
@@ -22,6 +24,9 @@ router = APIRouter()
 
 SCOPES = ["User.Read"]
 REDIRECT_PATH = "/auth/callback"
+SESSION_SECONDS = 8 * 60 * 60
+REMEMBER_SECONDS = 30 * 24 * 60 * 60  # "Remember me"; also the cookie's lifetime
+EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def _msal_app() -> msal.ConfidentialClientApplication:
@@ -32,11 +37,26 @@ def _msal_app() -> msal.ConfidentialClientApplication:
     )
 
 
-def _start_session(request: Request, employee: Employee) -> None:
+def _start_session(request: Request, employee: Employee, remember: bool = False) -> None:
     # Fresh session on every login to prevent session fixation
     request.session.clear()
     request.session["employee_id"] = employee.id
     request.session["csrf"] = secrets.token_urlsafe(32)
+    request.session["expires"] = int(time.time()) + (REMEMBER_SECONDS if remember else SESSION_SECONDS)
+
+
+def signed_in_id(request: Request) -> Optional[int]:
+    """The signed-in employee's id, or None once the session has expired."""
+    employee_id = request.session.get("employee_id")
+    if employee_id and request.session.get("expires", 0) > time.time():
+        return employee_id
+    if employee_id:
+        request.session.clear()
+    return None
+
+
+def _login_error(code: str) -> RedirectResponse:
+    return RedirectResponse(f"/login?error={code}", status_code=302)
 
 
 def _upsert_employee(db: Session, *, oid: Optional[str], email: str, name: str) -> Employee:
@@ -59,7 +79,7 @@ def _upsert_employee(db: Session, *, oid: Optional[str], email: str, name: str) 
 
 
 def current_employee(request: Request, db: Session = Depends(get_db)) -> Employee:
-    employee_id = request.session.get("employee_id")
+    employee_id = signed_in_id(request)
     employee = db.get(Employee, employee_id) if employee_id else None
     if employee is None or not employee.is_active:
         request.session.clear()
@@ -75,38 +95,46 @@ def require_csrf(request: Request) -> None:
 
 
 @router.get("/auth/login")
-def login(request: Request):
+def login(request: Request, email: str = "", remember: bool = False):
+    """Start Microsoft sign-in. The login page's email prefills Microsoft's form, where the
+    employee enters their password (and any second factor)."""
     if not settings.microsoft_configured:
-        raise HTTPException(status_code=503, detail="Microsoft sign-in is not configured.")
-    flow = _msal_app().initiate_auth_code_flow(SCOPES, redirect_uri=settings.base_url + REDIRECT_PATH)
+        return _login_error("unavailable")
+    email = email.strip().lower()[:320]
+    if email and (not EMAIL.match(email) or not settings.email_allowed(email)):
+        return _login_error("domain")
+    flow = _msal_app().initiate_auth_code_flow(
+        SCOPES, redirect_uri=settings.base_url + REDIRECT_PATH, login_hint=email or None)
     request.session.clear()
     request.session["auth_flow"] = flow
+    request.session["remember"] = remember
     return RedirectResponse(flow["auth_uri"], status_code=302)
 
 
 @router.get(REDIRECT_PATH)
 def callback(request: Request, db: Session = Depends(get_db)):
     flow = request.session.pop("auth_flow", None)
+    remember = bool(request.session.pop("remember", False))
     if not flow:
-        return RedirectResponse("/login?error=expired", status_code=302)
+        return _login_error("expired")
     try:
         result = _msal_app().acquire_token_by_auth_code_flow(flow, dict(request.query_params))
     except ValueError:  # state mismatch / replayed callback
-        return RedirectResponse("/login?error=state", status_code=302)
+        return _login_error("state")
     claims = result.get("id_token_claims") or {}
     if "error" in result or not claims:
-        return RedirectResponse("/login?error=denied", status_code=302)
+        return _login_error("denied")
     if claims.get("tid") != settings.ms_tenant_id:
-        return RedirectResponse("/login?error=tenant", status_code=302)
+        return _login_error("tenant")
 
     email = (claims.get("email") or claims.get("preferred_username") or "").lower()
     if not email or not settings.email_allowed(email):
-        return RedirectResponse("/login?error=domain", status_code=302)
+        return _login_error("domain")
 
     employee = _upsert_employee(db, oid=claims.get("oid"), email=email, name=claims.get("name", ""))
     if not employee.is_active:
-        return RedirectResponse("/login?error=inactive", status_code=302)
-    _start_session(request, employee)
+        return _login_error("inactive")
+    _start_session(request, employee, remember)
     return RedirectResponse("/", status_code=302)
 
 
@@ -117,12 +145,13 @@ def logout(request: Request):
 
 
 @router.get("/auth/dev-login")
-def dev_login(request: Request, email: str, name: str = "", db: Session = Depends(get_db)):
+def dev_login(request: Request, email: str, name: str = "", remember: bool = False, db: Session = Depends(get_db)):
     """Local development only: sign in as any allowed email without Microsoft."""
     if not settings.dev_login_enabled:
         raise HTTPException(status_code=404)
-    if "@" not in email or not settings.email_allowed(email):
-        raise HTTPException(status_code=400, detail="Email not allowed.")
+    email = email.strip().lower()[:320]
+    if not EMAIL.match(email) or not settings.email_allowed(email):
+        return _login_error("domain")
     employee = _upsert_employee(db, oid=None, email=email, name=name or email.split("@")[0].title())
-    _start_session(request, employee)
+    _start_session(request, employee, remember)
     return RedirectResponse("/", status_code=302)

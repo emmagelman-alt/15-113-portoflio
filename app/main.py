@@ -58,7 +58,7 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=settings.session_secret,
     session_cookie="andean_session",
-    max_age=8 * 60 * 60,
+    max_age=auth.REMEMBER_SECONDS,
     same_site="lax",
     https_only=settings.is_production,
 )
@@ -78,14 +78,14 @@ def healthz():
 
 @app.get("/")
 def dashboard(request: Request):
-    if not request.session.get("employee_id"):
+    if not auth.signed_in_id(request):
         return RedirectResponse("/login", status_code=302)
     return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-store"})
 
 
 @app.get("/login")
 def login_page(request: Request):
-    if request.session.get("employee_id"):
+    if auth.signed_in_id(request):
         return RedirectResponse("/", status_code=302)
     return FileResponse(STATIC / "login.html")
 

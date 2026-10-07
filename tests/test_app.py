@@ -1,3 +1,4 @@
+import dataclasses
 import pytest
 from fastapi.testclient import TestClient
 
@@ -14,7 +15,10 @@ def test_dashboard_requires_sign_in():
 
 def test_dev_login_rejects_outside_domain():
     client = TestClient(app)
-    assert client.get("/auth/dev-login", params={"email": "x@gmail.com"}).status_code == 400
+    for email in ("x@gmail.com", "not-an-email"):
+        r = client.get("/auth/dev-login", params={"email": email}, follow_redirects=False)
+        assert r.headers["location"] == "/login?error=domain"
+    assert client.get("/api/me").status_code == 401
 
 
 def test_mutations_require_csrf():
@@ -75,3 +79,47 @@ def test_production_settings_are_strict(monkeypatch):
     with pytest.raises(RuntimeError, match="DEV_LOGIN"):
         Settings().validate()
     assert Settings().dev_login_enabled is False
+
+
+def test_sessions_expire_unless_remembered(monkeypatch):
+    from app import auth
+    now = [1_000_000.0]
+    monkeypatch.setattr(auth.time, "time", lambda: now[0])
+
+    short = TestClient(app)
+    short.get("/auth/dev-login", params={"email": "emma@andean.test"})
+    remembered = TestClient(app)
+    remembered.get("/auth/dev-login", params={"email": "sam@andean.test", "remember": "1"})
+    assert short.get("/api/me").status_code == 200 and remembered.get("/api/me").status_code == 200
+
+    now[0] += auth.SESSION_SECONDS + 1
+    assert short.get("/api/me").status_code == 401
+    assert short.get("/", follow_redirects=False).headers["location"] == "/login"
+    assert remembered.get("/api/me").status_code == 200
+
+    now[0] += auth.REMEMBER_SECONDS
+    assert remembered.get("/api/me").status_code == 401
+
+
+def test_microsoft_login_prefills_email(monkeypatch):
+    from app import auth
+    seen = {}
+
+    class FakeMsal:
+        def initiate_auth_code_flow(self, scopes, redirect_uri, login_hint=None):
+            seen.update(redirect_uri=redirect_uri, login_hint=login_hint)
+            return {"auth_uri": "https://login.microsoftonline.com/t/authorize?state=x", "state": "x"}
+
+    client = TestClient(app)
+    assert client.get("/auth/login", follow_redirects=False).headers["location"] == "/login?error=unavailable"
+
+    monkeypatch.setattr(auth, "settings", dataclasses.replace(
+        auth.settings, ms_tenant_id="t", ms_client_id="c", ms_client_secret="s"))
+    monkeypatch.setattr(auth, "_msal_app", lambda: FakeMsal())
+    r = client.get("/auth/login", params={"email": " Emma@Andean.test ", "remember": "1"}, follow_redirects=False)
+    assert r.headers["location"].startswith("https://login.microsoftonline.com/")
+    assert seen == {"redirect_uri": "http://localhost:8000/auth/callback", "login_hint": "emma@andean.test"}
+    # Outside the allowed domain: stopped before ever reaching Microsoft
+    seen.clear()
+    r = client.get("/auth/login", params={"email": "emma@gmail.com"}, follow_redirects=False)
+    assert r.headers["location"] == "/login?error=domain" and not seen

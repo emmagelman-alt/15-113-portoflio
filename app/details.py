@@ -18,7 +18,7 @@ from slack_sdk.errors import SlackApiError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .auth import current_employee, require_csrf
+from .auth import current_employee, require_csrf, signed_in_id
 from .config import settings
 from .db import get_db
 from .integrations import notion, slack
@@ -210,7 +210,7 @@ def _require_content(body: MessageIn) -> str:
 
 @router.get("/files/{attachment_id}/{filename}")
 def download(attachment_id: int, request: Request, db: Session = Depends(get_db)):
-    employee_id = request.session.get("employee_id")
+    employee_id = signed_in_id(request)
     me = db.get(Employee, employee_id) if employee_id else None
     if me is None or not me.is_active:
         return RedirectResponse("/login", status_code=302)
