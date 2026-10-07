@@ -167,4 +167,151 @@
 
   // Clicking anywhere else dismisses the bubble
   document.addEventListener("click", hideBubble);
+
+  /* ---------------------------------------------------------------
+     Restaurant rec chat
+     Backend: github.com/emmagelman-alt/backend-for-restaurant-bot-
+     It only returns places from my Beli list rated 8.0+.
+  ---------------------------------------------------------------- */
+  var LOCAL = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  var RECS_API = LOCAL ? "http://localhost:8000" : "https://emma-restaurant-recs.onrender.com";
+  var COMPACT_SCALE = 0.6; // below this the scene is too small to type on, so the chat goes full-screen
+
+  var recBubble = document.getElementById("recBubble");
+  var recChat = document.getElementById("recChat");
+  var recClose = document.getElementById("recClose");
+  var recLog = document.getElementById("recLog");
+  var recForm = document.getElementById("recForm");
+  var recInput = document.getElementById("recInput");
+  var recSend = recForm.querySelector("button");
+  var recSuggestions = document.getElementById("recSuggestions");
+  var boardTitle = document.querySelector(".board-title");
+  var boardNotes = document.querySelector(".board-notes");
+  var BOARD_TITLE = boardTitle.textContent;
+
+  var recHistory = []; // sent back each turn so "what about cafes?" keeps the city
+  var backendAwake = false;
+
+  // Render's free tier sleeps when idle; poke it as soon as someone shows
+  // interest so it's usually awake by the time they hit Send.
+  function wakeBackend() {
+    if (backendAwake) return;
+    backendAwake = true;
+    fetch(RECS_API + "/healthz").catch(function () { backendAwake = false; });
+  }
+
+  function placeChat() {
+    var compact = scale < COMPACT_SCALE;
+    recChat.classList.toggle("is-sheet", compact);
+    var home = compact ? document.body : scene;
+    if (recChat.parentNode !== home) home.appendChild(recChat);
+  }
+  window.addEventListener("resize", placeChat);
+  placeChat();
+
+  function setChatOpen(open) {
+    recChat.hidden = !open;
+    boardNotes.hidden = open;
+    boardTitle.textContent = open ? "Restaurant recs" : BOARD_TITLE;
+    recBubble.setAttribute("aria-expanded", String(open));
+    if (open) {
+      wakeBackend();
+      if (!recLog.children.length) {
+        addMessage("emma", "Hi! Tell me a city (or country) and a cuisine or kind of place, " +
+                           "and I'll share my favorite spots, all rated 8.0+ on my Beli.");
+      }
+      recInput.focus();
+    } else {
+      recBubble.focus();
+    }
+  }
+
+  function addMessage(who, text, places) {
+    var msg = document.createElement("div");
+    msg.className = "rec-msg from-" + who;
+    msg.textContent = text; // textContent, never innerHTML, for anything from the network
+
+    if (places && places.length) {
+      var list = document.createElement("ul");
+      list.className = "rec-places";
+      places.forEach(function (p) {
+        var li = document.createElement("li");
+        var score = document.createElement("span");
+        score.className = "rec-score";
+        score.textContent = p.score.toFixed(1);
+        var info = document.createElement("span");
+        var name = document.createElement("span");
+        name.className = "rec-name";
+        name.textContent = p.name;
+        var meta = document.createElement("span");
+        meta.className = "rec-meta";
+        meta.textContent = [p.city, p.cuisines.join(", ") || p.category].join(" · ");
+        info.appendChild(name);
+        info.appendChild(meta);
+        li.appendChild(score);
+        li.appendChild(info);
+        list.appendChild(li);
+      });
+      msg.appendChild(list);
+    }
+
+    recLog.appendChild(msg);
+    recLog.scrollTop = recLog.scrollHeight;
+    return msg;
+  }
+
+  function ask(message) {
+    message = message.trim();
+    if (!message || recSend.disabled) return;
+    recSuggestions.hidden = true;
+    recInput.value = "";
+    addMessage("visitor", message);
+    var thinking = addMessage("emma", "thinking…");
+    thinking.classList.add("is-thinking");
+    recSend.disabled = true;
+
+    fetch(RECS_API + "/api/recs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: message, history: recHistory.slice(-12) })
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          if (!res.ok) throw new Error(data.detail || "Something went wrong. Try again?");
+          return data;
+        });
+      })
+      .then(function (data) {
+        thinking.remove();
+        addMessage("emma", data.reply, data.places);
+        recHistory.push({ role: "user", content: message }, { role: "assistant", content: data.reply });
+      })
+      .catch(function (err) {
+        thinking.remove();
+        // A network error (not an error reply) almost always means the server is still waking up
+        addMessage("emma", err instanceof TypeError
+          ? "Sorry, I'm still waking up! Give me a few seconds and send that again."
+          : err.message);
+        backendAwake = false;
+        wakeBackend();
+      })
+      .then(function () {
+        recSend.disabled = false;
+        recInput.focus();
+      });
+  }
+
+  recBubble.addEventListener("pointerenter", wakeBackend);
+  recBubble.addEventListener("click", function () { setChatOpen(recChat.hidden); });
+  recClose.addEventListener("click", function () { setChatOpen(false); });
+  recForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+    ask(recInput.value);
+  });
+  recSuggestions.addEventListener("click", function (e) {
+    if (e.target.tagName === "BUTTON") ask(e.target.textContent);
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !recChat.hidden) setChatOpen(false);
+  });
 })();
