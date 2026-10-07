@@ -95,7 +95,7 @@ def list_todos(status: Optional[str] = None, db: Session = Depends(get_db), me: 
 
 @router.get("/todos/sent", response_model=List[TodoOut])
 def sent_todos(db: Session = Depends(get_db), me: Employee = Depends(current_employee)):
-    query = (select(Todo).where(Todo.created_by_id == me.id, Todo.owner_id != me.id)
+    query = (select(Todo).where(Todo.created_by_id == me.id, Todo.owner_id != me.id, Todo.source == "internal")
              .order_by(Todo.created_at.desc()).limit(100))
     return [_out(t) for t in db.scalars(query)]
 

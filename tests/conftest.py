@@ -13,6 +13,11 @@ os.environ.update({
     "MS_CLIENT_ID": "",
     "MS_CLIENT_SECRET": "",
     "ALLOWED_EMAIL_DOMAINS": "andean.test",
+    "SLACK_BOT_TOKEN": "",
+    "SLACK_SIGNING_SECRET": "",
+    "SLACK_APP_TOKEN": "",
+    "NOTION_TOKEN": "",
+    "NOTION_TASKS_DATABASE_ID": "",
 })
 
 from fastapi.testclient import TestClient  # noqa: E402

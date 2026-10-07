@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from .integrations import notion, slack
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
 
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s: %(message)s")
 settings.validate()
 # TODO: switch to Alembic migrations before the first schema change in production.
 Base.metadata.create_all(engine)

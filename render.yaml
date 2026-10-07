@@ -29,6 +29,14 @@ services:
         sync: false
       - key: ADMIN_EMAILS
         sync: false
+      - key: SLACK_BOT_TOKEN
+        sync: false
+      - key: SLACK_SIGNING_SECRET
+        sync: false
+      - key: NOTION_TOKEN
+        sync: false
+      - key: NOTION_TASKS_DATABASE_ID
+        sync: false
 
 databases:
   - name: andean-dashboard-db
