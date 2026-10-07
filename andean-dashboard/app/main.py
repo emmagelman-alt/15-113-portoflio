@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import auth, details, todos
+from . import auth, demo, details, todos
 from .config import settings
 from .db import Base, engine
 from .integrations import notion, outlook, slack
@@ -64,6 +64,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(demo.router)
 app.include_router(todos.router)
 app.include_router(details.router)
 app.include_router(slack.router)
@@ -95,4 +96,5 @@ def login_page(request: Request):
 def auth_config():
     """Tells the login page which buttons to show."""
     return {"microsoft": settings.microsoft_configured, "dev_login": settings.dev_login_enabled,
+            "demo": settings.is_demo, "demo_domain": settings.allowed_email_domains[0] if settings.is_demo else None,
             "slack": settings.slack_configured, "notion": settings.notion_configured}

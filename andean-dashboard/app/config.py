@@ -19,7 +19,9 @@ class Settings:
     app_env: str = field(default_factory=lambda: os.getenv("APP_ENV", "production"))
     session_secret: str = field(default_factory=lambda: os.getenv("SESSION_SECRET", ""))
     database_url: str = field(default_factory=lambda: os.getenv("DATABASE_URL", "sqlite:///./dashboard.db"))
-    base_url: str = field(default_factory=lambda: os.getenv("BASE_URL", "http://localhost:8000").rstrip("/"))
+    # Render sets RENDER_EXTERNAL_URL (https://<service>.onrender.com) on its services
+    base_url: str = field(default_factory=lambda: (
+        os.getenv("BASE_URL") or os.getenv("RENDER_EXTERNAL_URL") or "http://localhost:8000").rstrip("/"))
 
     # Microsoft Entra ID (Outlook / Microsoft 365) app registration
     ms_tenant_id: str = field(default_factory=lambda: os.getenv("MS_TENANT_ID", ""))
@@ -33,6 +35,10 @@ class Settings:
 
     # Local-only shortcut that skips Microsoft sign-in. Never available in production.
     dev_login: bool = field(default_factory=lambda: os.getenv("DEV_LOGIN") == "1")
+
+    # APP_ENV=demo: a password-protected showcase (e.g. the class portfolio) that signs in
+    # with an allowed demo email plus this shared password instead of Microsoft.
+    demo_password: str = field(default_factory=lambda: os.getenv("DEMO_PASSWORD", ""))
 
     # Slack app (see slack-manifest.yml). The app token enables Socket Mode for local
     # development, so Slack can reach the laptop without a public URL.
@@ -65,6 +71,10 @@ class Settings:
         return self.app_env != "development"
 
     @property
+    def is_demo(self) -> bool:
+        return self.app_env == "demo"
+
+    @property
     def dev_login_enabled(self) -> bool:
         return self.dev_login and not self.is_production
 
@@ -75,7 +85,12 @@ class Settings:
     def validate(self) -> None:
         if len(self.session_secret) < 32:
             raise RuntimeError("SESSION_SECRET must be at least 32 characters.")
-        if self.is_production and not self.microsoft_configured:
+        if self.is_demo:
+            if len(self.demo_password) < 20:
+                raise RuntimeError("APP_ENV=demo needs DEMO_PASSWORD of at least 20 characters.")
+            if not self.allowed_email_domains:
+                raise RuntimeError("APP_ENV=demo needs ALLOWED_EMAIL_DOMAINS (e.g. andean.test) so only demo accounts exist.")
+        elif self.is_production and not self.microsoft_configured:
             raise RuntimeError("Microsoft sign-in (MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET) is required in production.")
         if self.is_production and not self.base_url.startswith("https://"):
             raise RuntimeError("BASE_URL must use https:// in production.")
