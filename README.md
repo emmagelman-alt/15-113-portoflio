@@ -30,6 +30,17 @@ Open http://localhost:8000. Until Microsoft sign-in is configured, use the **Loc
 
 Run the tests with `.venv/bin/python -m pytest`.
 
+## Password-protected demo (class portfolio)
+
+`APP_ENV=demo` runs a showcase with no Microsoft, Slack or Notion setup:
+
+- The login page asks for an email and a **shared demo password** (`DEMO_PASSWORD`, at least 20 characters; the app refuses to start without it). Wrong passwords are rate-limited per visitor.
+- Only emails in `ALLOWED_EMAIL_DOMAINS` (set it to a demo domain like `andean.test`) can sign in, so real company accounts never exist in the demo.
+- Each new visitor gets a few starter to-dos from sample coworkers.
+- Everything except the login page, static files and `/healthz` requires sign-in.
+
+On Render: set `APP_ENV=demo`, `DEMO_PASSWORD`, `ALLOWED_EMAIL_DOMAINS=andean.test`, and a generated `SESSION_SECRET`. `BASE_URL` defaults to Render's `RENDER_EXTERNAL_URL`. With the default SQLite database the demo resets on each deploy.
+
 ## Microsoft sign-in setup (needs Andean IT / an Entra admin)
 
 1. Go to the Entra admin center: **App registrations → New registration**.
@@ -94,6 +105,7 @@ The link is stored on the server (`calendar_links` table) and only that person's
 |---|---|
 | `app/auth.py` | Microsoft OIDC login, sessions, CSRF |
 | `app/todos.py` | To-do API: list, add, send to coworker, complete, delete |
+| `app/demo.py` | Password-protected demo sign-in and starter to-dos |
 | `app/integrations/outlook.py` | Outlook calendar: link validation, .ics fetch, recurring events in the viewer's time zone |
 | `static/widgets.js` | Calendar, Machines and sherpa.ai panels |
 | `app/details.py` | Task panel API: Slack thread and replies, Notion page/comments/edits, coworker conversation, linked-doc previews |

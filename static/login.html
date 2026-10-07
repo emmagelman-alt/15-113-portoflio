@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sign in · Andean Dashboard</title>
   <link rel="icon" href="/static/logomark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/login/login.css">
+  <link rel="stylesheet" href="/static/login/login.css?v=4">
 </head>
 <body>
   <div class="art" aria-hidden="true">
@@ -31,6 +31,11 @@
           <button id="continue" class="continue" type="submit">
             <span id="continue-text">Continue with Microsoft</span><span aria-hidden="true">→</span>
           </button>
+          <!-- Demo mode only (APP_ENV=demo). Disabled otherwise so it's never sent anywhere. -->
+          <div class="password-row" id="password-row" hidden>
+            <input id="password" name="password" type="password" autocomplete="current-password" aria-label="Demo password" disabled>
+            <button class="arrow" type="submit" aria-label="Sign in">→</button>
+          </div>
           <img class="line" src="/static/login/line.svg" alt="" width="307.307" height="4">
         </div>
       </div>
@@ -44,13 +49,13 @@
           </span>
           Remember me
         </label>
-        <a class="forgot" href="https://passwordreset.microsoftonline.com/" target="_blank" rel="noopener noreferrer">Forgot?</a>
+        <a class="forgot" id="forgot" href="https://passwordreset.microsoftonline.com/" target="_blank" rel="noopener noreferrer">Forgot?</a>
       </div>
 
       <p id="error" class="message error" role="alert" hidden></p>
       <p id="note" class="message">You'll enter your password on Microsoft's secure page. The dashboard never sees it.</p>
     </form>
   </main>
-  <script src="/static/login.js?v=3"></script>
+  <script src="/static/login.js?v=4"></script>
 </body>
 </html>

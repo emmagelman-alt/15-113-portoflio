@@ -12,6 +12,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 html, body { height: 100%; }
 
@@ -120,6 +121,15 @@ h1 {
 }
 .field input:focus { outline: none; }
 .field:focus-within .line { filter: drop-shadow(0 0 3px rgba(214, 166, 142, 0.9)); }
+
+/* Demo mode: password field with a submit arrow where the design's eye icon sits */
+.password-row { display: flex; align-items: center; height: 43px; }
+.password-row input { flex: 1; min-width: 0; height: 43px; margin: 0; padding: 0 2px; border: 0; background: transparent;
+  color: var(--andean-white); font: inherit; font-size: 20px; }
+.password-row input:focus { outline: none; }
+.field:focus-within .line { filter: drop-shadow(0 0 3px rgba(214, 166, 142, 0.9)); }
+.arrow { border: 0; background: transparent; color: var(--andean-white); font: inherit; font-size: 20px; cursor: pointer; padding: 0 2px; }
+.arrow:focus-visible { outline: 2px solid var(--light-bronze); outline-offset: 2px; }
 
 .continue {
   display: flex;
