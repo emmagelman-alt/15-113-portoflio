@@ -18,3 +18,23 @@ services:
         sync: false
       - key: LINGOLIX_API_KEY
         sync: false
+  - type: web
+    name: andean-dashboard-demo
+    runtime: python
+    plan: free
+    rootDir: andean-dashboard
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --proxy-headers --forwarded-allow-ips '*'
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      # Password-protected demo: no Microsoft/Slack/Notion; refuses to start without DEMO_PASSWORD (20+ chars)
+      - key: APP_ENV
+        value: demo
+      - key: DEMO_PASSWORD
+        sync: false
+      - key: ALLOWED_EMAIL_DOMAINS
+        value: andean.test
+      - key: SESSION_SECRET
+        generateValue: true
