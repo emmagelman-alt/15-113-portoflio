@@ -12,7 +12,9 @@ from sqlalchemy.orm import Session
 
 from .auth import current_employee, require_csrf
 from .db import get_db
-from .models import Employee, Todo, utcnow
+from .integrations import notion
+from .integrations.common import set_status
+from .models import Employee, Todo
 
 router = APIRouter(prefix="/api")
 
@@ -84,6 +86,8 @@ def list_todos(status: Optional[str] = None, db: Session = Depends(get_db), me: 
     query = select(Todo).where(Todo.owner_id == me.id)
     if status:
         query = query.where(Todo.status == status)
+    else:
+        query = query.where(Todo.status != "dismissed")
     # Undated items last, then soonest due, then newest
     query = query.order_by(case((Todo.due_date.is_(None), 1), else_=0), Todo.due_date, Todo.created_at.desc())
     return [_out(t) for t in db.scalars(query)]
@@ -120,15 +124,22 @@ def update_todo(todo_id: int, body: TodoUpdate, db: Session = Depends(get_db), m
         todo.notes = changes["notes"].strip()
     if "due_date" in changes:
         todo.due_date = changes["due_date"]
+    status_changed = "status" in changes and changes["status"] != todo.status
     if "status" in changes:
-        todo.status = changes["status"]
-        todo.completed_at = utcnow() if todo.status == "done" else None
+        set_status(todo, changes["status"])
     db.commit()
+    if status_changed and todo.source == "notion":
+        notion.push_status(todo)
     return _out(todo)
 
 
 @router.delete("/todos/{todo_id}", status_code=204, dependencies=[Depends(require_csrf)])
 def delete_todo(todo_id: int, db: Session = Depends(get_db), me: Employee = Depends(current_employee)):
-    db.delete(_owned(db, todo_id, me))
+    todo = _owned(db, todo_id, me)
+    if todo.source == "internal":
+        db.delete(todo)
+    else:
+        # Keep a tombstone so the next Slack/Notion sync doesn't re-import it
+        todo.status = "dismissed"
     db.commit()
     return Response(status_code=204)

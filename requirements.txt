@@ -5,3 +5,5 @@ psycopg[binary]>=3.2,<4
 msal>=1.31,<2
 itsdangerous>=2.2,<3
 python-dotenv>=1,<2
+httpx>=0.27,<1
+slack_sdk>=3.33,<4

@@ -34,6 +34,29 @@ class Settings:
     # Local-only shortcut that skips Microsoft sign-in. Never available in production.
     dev_login: bool = field(default_factory=lambda: os.getenv("DEV_LOGIN") == "1")
 
+    # Slack app (see slack-manifest.yml). The app token enables Socket Mode for local
+    # development, so Slack can reach the laptop without a public URL.
+    slack_bot_token: str = field(default_factory=lambda: os.getenv("SLACK_BOT_TOKEN", ""))
+    slack_signing_secret: str = field(default_factory=lambda: os.getenv("SLACK_SIGNING_SECRET", ""))
+    slack_app_token: str = field(default_factory=lambda: os.getenv("SLACK_APP_TOKEN", ""))
+
+    # Notion internal integration + the tasks database it syncs from
+    notion_token: str = field(default_factory=lambda: os.getenv("NOTION_TOKEN", ""))
+    notion_tasks_database_id: str = field(default_factory=lambda: os.getenv("NOTION_TASKS_DATABASE_ID", ""))
+    notion_assignee_property: str = field(default_factory=lambda: os.getenv("NOTION_ASSIGNEE_PROPERTY", "Assignee"))
+    notion_status_property: str = field(default_factory=lambda: os.getenv("NOTION_STATUS_PROPERTY", "Status"))
+    notion_due_property: str = field(default_factory=lambda: os.getenv("NOTION_DUE_PROPERTY", "Due"))
+    notion_done_statuses: List[str] = field(default_factory=lambda: _split(os.getenv("NOTION_DONE_STATUSES", "Done")))
+    notion_sync_seconds: int = field(default_factory=lambda: int(os.getenv("NOTION_SYNC_SECONDS", "120")))
+
+    @property
+    def slack_configured(self) -> bool:
+        return bool(self.slack_bot_token and self.slack_signing_secret)
+
+    @property
+    def notion_configured(self) -> bool:
+        return bool(self.notion_token and self.notion_tasks_database_id)
+
     @property
     def is_production(self) -> bool:
         return self.app_env != "development"

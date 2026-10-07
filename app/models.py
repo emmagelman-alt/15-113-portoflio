@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
 
 SOURCES = ("internal", "slack", "notion")
-STATUSES = ("suggested", "open", "done")
+STATUSES = ("suggested", "open", "done", "dismissed")
 
 
 def utcnow() -> datetime:

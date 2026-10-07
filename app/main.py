@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -10,6 +11,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from . import auth, todos
 from .config import settings
 from .db import Base, engine
+from .integrations import notion, slack
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
 
@@ -17,7 +19,17 @@ settings.validate()
 # TODO: switch to Alembic migrations before the first schema change in production.
 Base.metadata.create_all(engine)
 
-app = FastAPI(title="Andean Dashboard", docs_url=None, redoc_url=None, openapi_url=None)
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    await notion.startup()
+    await slack.startup()
+    yield
+    await slack.shutdown()
+    await notion.shutdown()
+
+
+app = FastAPI(title="Andean Dashboard", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 
 
 @app.middleware("http")
@@ -46,6 +58,8 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(todos.router)
+app.include_router(slack.router)
+app.include_router(notion.router)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
@@ -71,4 +85,5 @@ def login_page(request: Request):
 @app.get("/auth/config")
 def auth_config():
     """Tells the login page which buttons to show."""
-    return {"microsoft": settings.microsoft_configured, "dev_login": settings.dev_login_enabled}
+    return {"microsoft": settings.microsoft_configured, "dev_login": settings.dev_login_enabled,
+            "slack": settings.slack_configured, "notion": settings.notion_configured}

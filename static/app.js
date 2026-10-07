@@ -52,10 +52,11 @@ function dueLabel(iso) {
   return { text, overdue: days < 0 };
 }
 
-function todoItem(t, { readOnly = false } = {}) {
+function todoItem(t, { readOnly = false, suggested = false } = {}) {
   const meta = el("div", { class: "meta" }, el("span", { class: `badge badge-${t.source}` }, SOURCE_LABEL[t.source] || t.source));
   if (readOnly) meta.append(el("span", {}, `To ${t.owner.name}`), el("span", {}, t.status === "done" ? "✓ Done" : "Open"));
   else if (t.created_by && t.created_by.id !== state.me.id) meta.append(el("span", {}, `From ${t.created_by.name}`));
+  if (t.notes && t.source !== "internal") meta.append(el("span", {}, t.notes));
   if (t.due_date && t.status !== "done") {
     const due = dueLabel(t.due_date);
     meta.append(el("span", { class: due.overdue ? "overdue" : "" }, due.text));
@@ -63,6 +64,13 @@ function todoItem(t, { readOnly = false } = {}) {
   if (t.source_url) meta.append(el("a", { href: t.source_url, target: "_blank", rel: "noopener noreferrer" }, `Open in ${SOURCE_LABEL[t.source]} ↗`));
 
   const li = el("li", { class: `todo${t.status === "done" ? " done" : ""}` });
+  if (suggested) {
+    li.append(el("div", { class: "body" }, el("div", { class: "text" }, t.title), meta),
+      el("div", { class: "actions" },
+        el("button", { class: "btn", type: "button", onclick: () => setStatus(t, "open") }, "Accept"),
+        el("button", { class: "btn btn-ghost", type: "button", onclick: () => dismiss(t) }, "Dismiss")));
+    return li;
+  }
   if (!readOnly) {
     li.append(el("input", {
       type: "checkbox",
@@ -78,12 +86,13 @@ function todoItem(t, { readOnly = false } = {}) {
 
 function render() {
   const filter = FILTERS.find((f) => f.id === state.filter);
-  const visible = state.todos.filter(filter.test);
-  const open = visible.filter((t) => t.status !== "done");
+  const suggested = state.todos.filter((t) => t.status === "suggested");
+  const visible = state.todos.filter((t) => t.status !== "suggested" && filter.test(t));
+  const open = visible.filter((t) => t.status === "open");
   const done = visible.filter((t) => t.status === "done");
 
   $("tabs").replaceChildren(...FILTERS.map((f) => {
-    const count = state.todos.filter((t) => t.status !== "done" && f.test(t)).length;
+    const count = state.todos.filter((t) => t.status === "open" && f.test(t)).length;
     return el("button", { class: "tab", type: "button", "aria-pressed": String(f.id === state.filter), onclick: () => { state.filter = f.id; render(); } },
       f.label, el("span", { class: "count" }, String(count)));
   }));
@@ -94,13 +103,17 @@ function render() {
   $("done-summary").textContent = `Completed (${done.length})`;
   $("done-list").replaceChildren(...done.map((t) => todoItem(t)));
 
+  $("suggested-section").hidden = suggested.length === 0;
+  $("suggested-list").replaceChildren(...suggested.map((t) => todoItem(t, { suggested: true })));
+
   $("sent-section").hidden = state.sent.length === 0;
   $("sent-list").replaceChildren(...state.sent.map((t) => todoItem(t, { readOnly: true })));
 
-  const openAll = state.todos.filter((t) => t.status !== "done");
+  const openAll = state.todos.filter((t) => t.status === "open");
   const overdue = openAll.filter((t) => t.due_date && dueLabel(t.due_date).overdue).length;
   $("summary").textContent = openAll.length === 0 ? "You're all caught up."
     : `${openAll.length} open to-do${openAll.length === 1 ? "" : "s"}${overdue ? ` · ${overdue} overdue` : ""}`;
+  if (suggested.length) $("summary").textContent += ` · ${suggested.length} suggested`;
 }
 
 function renderAssignees() {
@@ -124,8 +137,19 @@ async function setStatus(t, status) {
   render();
 }
 
+async function dismiss(t) {
+  try {
+    await api(`/api/todos/${t.id}`, { method: "DELETE" });
+    state.todos = state.todos.filter((x) => x.id !== t.id);
+    render();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
 async function remove(t) {
-  if (!confirm(`Delete "${t.title}"?`)) return;
+  const verb = t.source === "internal" ? "Delete" : `Remove from your dashboard (it stays in ${SOURCE_LABEL[t.source]})`;
+  if (!confirm(`${verb}: "${t.title}"?`)) return;
   try {
     await api(`/api/todos/${t.id}`, { method: "DELETE" });
     state.todos = state.todos.filter((x) => x.id !== t.id);
@@ -170,4 +194,5 @@ $("logout").addEventListener("click", async () => {
   state.employees = await api("/api/employees");
   renderAssignees();
   await refresh();
+  setInterval(() => { if (!document.hidden) refresh().catch(() => {}); }, 30000);
 })();
