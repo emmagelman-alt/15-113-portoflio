@@ -1,0 +1,74 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+
+from . import auth, todos
+from .config import settings
+from .db import Base, engine
+
+STATIC = Path(__file__).resolve().parent.parent / "static"
+
+settings.validate()
+# TODO: switch to Alembic migrations before the first schema change in production.
+Base.metadata.create_all(engine)
+
+app = FastAPI(title="Andean Dashboard", docs_url=None, redoc_url=None, openapi_url=None)
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("Content-Security-Policy",
+                                "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'; form-action 'self' https://login.microsoftonline.com")
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "same-origin")
+    if settings.is_production:
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    if request.url.path.startswith(("/api", "/auth")):
+        response.headers.setdefault("Cache-Control", "no-store")
+    return response
+
+
+# Added last so it wraps everything above and request.session is always available
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.session_secret,
+    session_cookie="andean_session",
+    max_age=8 * 60 * 60,
+    same_site="lax",
+    https_only=settings.is_production,
+)
+
+app.include_router(auth.router)
+app.include_router(todos.router)
+app.mount("/static", StaticFiles(directory=STATIC), name="static")
+
+
+@app.get("/healthz")
+def healthz():
+    return {"ok": True}
+
+
+@app.get("/")
+def dashboard(request: Request):
+    if not request.session.get("employee_id"):
+        return RedirectResponse("/login", status_code=302)
+    return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-store"})
+
+
+@app.get("/login")
+def login_page(request: Request):
+    if request.session.get("employee_id"):
+        return RedirectResponse("/", status_code=302)
+    return FileResponse(STATIC / "login.html")
+
+
+@app.get("/auth/config")
+def auth_config():
+    """Tells the login page which buttons to show."""
+    return {"microsoft": settings.microsoft_configured, "dev_login": settings.dev_login_enabled}

@@ -1,0 +1,208 @@
+/* Andean palette — see ANDEAN-DESIGN/color palletes and info/color-reference.md
+   (no pure black/white per brand rules) */
+:root {
+  --ink-black: #000d19;
+  --deep-space: #152f49;
+  --blue-slate: #5f697c;
+  --rosy-taupe: #ad817d;
+  --light-bronze: #d6a68e;
+  --taupe: #ab9491;
+  --andean-white: #f0eff1;
+  --andean-grey: #c8cccd;
+  --almond-silk: #ddc0b4;
+  --soft-blush: #ebd9d6;
+
+  --bg: var(--andean-white);
+  --surface: #f7f6f7;
+  --text: var(--ink-black);
+  --muted: var(--blue-slate);
+  --border: var(--andean-grey);
+  --primary: var(--deep-space);
+  --on-primary: var(--andean-white);
+  --accent: var(--light-bronze);
+  --danger: #9b3b33;
+  --focus: var(--rosy-taupe);
+  --badge-slack: var(--soft-blush);
+  --badge-notion: #dde1e7;
+  --badge-internal: var(--almond-silk);
+  --shadow: 0 1px 2px rgba(0, 13, 25, 0.06), 0 4px 16px rgba(0, 13, 25, 0.05);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: var(--ink-black);
+    --surface: #0a1d30;
+    --text: var(--andean-white);
+    --muted: var(--andean-grey);
+    --border: #22384f;
+    --primary: var(--light-bronze);
+    --on-primary: var(--ink-black);
+    --danger: #e08a80;
+    --badge-slack: #3a2b2b;
+    --badge-notion: #23324a;
+    --badge-internal: #3b2f27;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+.btn {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.btn:hover { filter: brightness(1.1); }
+.btn:disabled { opacity: .6; cursor: default; }
+.btn-ghost { background: transparent; color: var(--text); border-color: var(--border); font-weight: 500; }
+
+input[type="text"], input[type="email"], input[type="date"], select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: var(--bg);
+}
+
+/* ---------- Login ---------- */
+.login-page { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px 32px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.login-card .mark { width: 88px; height: auto; margin-bottom: 20px; }
+.login-card h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: .02em; }
+.login-card p { color: var(--muted); margin: 0 0 28px; }
+.ms-btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; }
+.ms-logo { display: grid; grid-template-columns: 8px 8px; gap: 2px; }
+.ms-logo span { width: 8px; height: 8px; }
+.ms-logo span:nth-child(1) { background: #f25022; }
+.ms-logo span:nth-child(2) { background: #7fba00; }
+.ms-logo span:nth-child(3) { background: #00a4ef; }
+.ms-logo span:nth-child(4) { background: #ffb900; }
+.login-error {
+  margin-top: 18px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--badge-slack);
+  color: var(--danger);
+  font-size: 14px;
+}
+.dev-login { margin-top: 28px; padding-top: 20px; border-top: 1px dashed var(--border); text-align: left; }
+.dev-login label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+.dev-login form { display: flex; gap: 8px; }
+.fine-print { margin-top: 24px !important; margin-bottom: 0 !important; font-size: 12px; }
+
+/* ---------- Dashboard ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.topbar .mark { width: 40px; height: auto; }
+.topbar .title { font-weight: 700; letter-spacing: .04em; text-transform: uppercase; font-size: 13px; }
+.topbar .spacer { flex: 1; }
+.topbar .who { color: var(--muted); font-size: 14px; }
+
+main { max-width: 860px; margin: 0 auto; padding: 32px 24px 64px; }
+.greeting h1 { margin: 0; font-size: 26px; }
+.greeting p { margin: 4px 0 24px; color: var(--muted); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  margin-bottom: 24px;
+}
+.card h2 { font-size: 15px; margin: 0 0 14px; }
+
+.add-form { display: grid; grid-template-columns: 1fr 150px 180px auto; gap: 10px; align-items: end; }
+.add-form label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+.form-error { color: var(--danger); font-size: 14px; margin: 10px 0 0; }
+
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.tab {
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.tab[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.tab .count { opacity: .7; margin-left: 4px; }
+
+.todo-list { list-style: none; margin: 0; padding: 0; }
+.todo {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 4px;
+  border-top: 1px solid var(--border);
+}
+.todo:first-child { border-top: 0; }
+.todo input[type="checkbox"] { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--primary); cursor: pointer; flex: none; }
+.todo .body { flex: 1; min-width: 0; }
+.todo .text { overflow-wrap: anywhere; }
+.todo.done .text { text-decoration: line-through; color: var(--muted); }
+.todo .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.todo .meta .overdue { color: var(--danger); font-weight: 600; }
+.badge { border-radius: 999px; padding: 1px 8px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text); }
+.badge-slack { background: var(--badge-slack); }
+.badge-notion { background: var(--badge-notion); }
+.badge-internal { background: var(--badge-internal); }
+.icon-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 18px;
+  line-height: 1;
+}
+.icon-btn:hover { color: var(--danger); background: var(--bg); }
+
+.empty { color: var(--muted); text-align: center; padding: 24px 0 8px; margin: 0; }
+details summary { cursor: pointer; color: var(--muted); font-size: 14px; margin-top: 8px; }
+
+@media (max-width: 640px) {
+  .topbar { padding: 12px 16px; }
+  .topbar .who { display: none; }
+  main { padding: 24px 16px 48px; }
+  .add-form { grid-template-columns: 1fr 1fr; }
+  .add-form .field-title, .add-form button { grid-column: 1 / -1; }
+}

@@ -1,0 +1,173 @@
+const state = { me: null, todos: [], sent: [], employees: [], filter: "all" };
+
+const FILTERS = [
+  { id: "all", label: "All", test: () => true },
+  { id: "coworkers", label: "From coworkers", test: (t) => t.source === "internal" && t.created_by && t.created_by.id !== state.me.id },
+  { id: "mine", label: "Added by me", test: (t) => t.source === "internal" && (!t.created_by || t.created_by.id === state.me.id) },
+  { id: "slack", label: "Slack", test: (t) => t.source === "slack" },
+  { id: "notion", label: "Notion", test: (t) => t.source === "notion" },
+];
+const SOURCE_LABEL = { internal: "Dashboard", slack: "Slack", notion: "Notion" };
+
+const $ = (id) => document.getElementById(id);
+
+async function api(path, options = {}) {
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  if (options.method && options.method !== "GET") headers["X-CSRF-Token"] = state.me ? state.me.csrf_token : "";
+  const res = await fetch(path, { credentials: "same-origin", ...options, headers });
+  if (res.status === 401) {
+    location.href = "/login";
+    throw new Error("signed out");
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const detail = Array.isArray(data.detail) ? data.detail[0].msg : data.detail;
+    throw new Error(detail || "Something went wrong.");
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") node.className = v;
+    else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v);
+  }
+  for (const c of children) if (c != null) node.append(c);
+  return node;
+}
+
+function today() {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function dueLabel(iso) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const due = new Date(y, m - 1, d);
+  const days = Math.round((due - today()) / 86400000);
+  const text = days === 0 ? "Due today" : days === 1 ? "Due tomorrow" : days < 0 ? `Overdue · ${due.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+    : `Due ${due.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+  return { text, overdue: days < 0 };
+}
+
+function todoItem(t, { readOnly = false } = {}) {
+  const meta = el("div", { class: "meta" }, el("span", { class: `badge badge-${t.source}` }, SOURCE_LABEL[t.source] || t.source));
+  if (readOnly) meta.append(el("span", {}, `To ${t.owner.name}`), el("span", {}, t.status === "done" ? "✓ Done" : "Open"));
+  else if (t.created_by && t.created_by.id !== state.me.id) meta.append(el("span", {}, `From ${t.created_by.name}`));
+  if (t.due_date && t.status !== "done") {
+    const due = dueLabel(t.due_date);
+    meta.append(el("span", { class: due.overdue ? "overdue" : "" }, due.text));
+  }
+  if (t.source_url) meta.append(el("a", { href: t.source_url, target: "_blank", rel: "noopener noreferrer" }, `Open in ${SOURCE_LABEL[t.source]} ↗`));
+
+  const li = el("li", { class: `todo${t.status === "done" ? " done" : ""}` });
+  if (!readOnly) {
+    li.append(el("input", {
+      type: "checkbox",
+      "aria-label": `Mark "${t.title}" ${t.status === "done" ? "not done" : "done"}`,
+      ...(t.status === "done" ? { checked: "" } : {}),
+      onchange: (e) => setStatus(t, e.target.checked ? "done" : "open"),
+    }));
+  }
+  li.append(el("div", { class: "body" }, el("div", { class: "text" }, t.title), meta));
+  if (!readOnly) li.append(el("button", { class: "icon-btn", type: "button", title: "Delete", "aria-label": `Delete "${t.title}"`, onclick: () => remove(t) }, "×"));
+  return li;
+}
+
+function render() {
+  const filter = FILTERS.find((f) => f.id === state.filter);
+  const visible = state.todos.filter(filter.test);
+  const open = visible.filter((t) => t.status !== "done");
+  const done = visible.filter((t) => t.status === "done");
+
+  $("tabs").replaceChildren(...FILTERS.map((f) => {
+    const count = state.todos.filter((t) => t.status !== "done" && f.test(t)).length;
+    return el("button", { class: "tab", type: "button", "aria-pressed": String(f.id === state.filter), onclick: () => { state.filter = f.id; render(); } },
+      f.label, el("span", { class: "count" }, String(count)));
+  }));
+
+  $("open-list").replaceChildren(...open.map((t) => todoItem(t)));
+  $("empty").hidden = open.length > 0;
+  $("done-section").hidden = done.length === 0;
+  $("done-summary").textContent = `Completed (${done.length})`;
+  $("done-list").replaceChildren(...done.map((t) => todoItem(t)));
+
+  $("sent-section").hidden = state.sent.length === 0;
+  $("sent-list").replaceChildren(...state.sent.map((t) => todoItem(t, { readOnly: true })));
+
+  const openAll = state.todos.filter((t) => t.status !== "done");
+  const overdue = openAll.filter((t) => t.due_date && dueLabel(t.due_date).overdue).length;
+  $("summary").textContent = openAll.length === 0 ? "You're all caught up."
+    : `${openAll.length} open to-do${openAll.length === 1 ? "" : "s"}${overdue ? ` · ${overdue} overdue` : ""}`;
+}
+
+function renderAssignees() {
+  $("assignee").replaceChildren(
+    el("option", { value: "" }, "Me"),
+    ...state.employees.filter((e) => e.id !== state.me.id).map((e) => el("option", { value: String(e.id) }, e.name)),
+  );
+}
+
+async function refresh() {
+  [state.todos, state.sent] = await Promise.all([api("/api/todos"), api("/api/todos/sent")]);
+  render();
+}
+
+async function setStatus(t, status) {
+  try {
+    Object.assign(t, await api(`/api/todos/${t.id}`, { method: "PATCH", body: JSON.stringify({ status }) }));
+  } catch (e) {
+    alert(e.message);
+  }
+  render();
+}
+
+async function remove(t) {
+  if (!confirm(`Delete "${t.title}"?`)) return;
+  try {
+    await api(`/api/todos/${t.id}`, { method: "DELETE" });
+    state.todos = state.todos.filter((x) => x.id !== t.id);
+    render();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+$("add-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const button = e.submitter || e.target.querySelector("button");
+  const err = $("form-error");
+  err.hidden = true;
+  button.disabled = true;
+  try {
+    const assignee = $("assignee").value;
+    await api("/api/todos", {
+      method: "POST",
+      body: JSON.stringify({ title: $("title").value, due_date: $("due").value || null, assignee_id: assignee ? Number(assignee) : null }),
+    });
+    e.target.reset();
+    await refresh();
+    $("title").focus();
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.hidden = false;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$("logout").addEventListener("click", async () => {
+  await api("/auth/logout", { method: "POST" }).catch(() => {});
+  location.href = "/login";
+});
+
+(async function init() {
+  state.me = await api("/api/me");
+  $("who").textContent = state.me.email;
+  $("greeting").textContent = `Hi, ${state.me.name.split(" ")[0]}`;
+  state.employees = await api("/api/employees");
+  renderAssignees();
+  await refresh();
+})();

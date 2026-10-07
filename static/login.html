@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Andean Dashboard</title>
+  <link rel="icon" href="/static/logomark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-page">
+  <main class="login-card">
+    <img class="mark" src="/static/logomark.svg" alt="Andean Systems">
+    <h1>Andean Dashboard</h1>
+    <p>Sign in with your Andean Microsoft account.</p>
+
+    <a id="ms-login" class="btn ms-btn" href="/auth/login">
+      <span class="ms-logo" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+      Sign in with Microsoft
+    </a>
+
+    <div id="error" class="login-error" role="alert" hidden></div>
+
+    <div id="dev-login" class="dev-login" hidden>
+      <label for="dev-email">Local development sign-in</label>
+      <form action="/auth/dev-login" method="get">
+        <input id="dev-email" type="email" name="email" placeholder="you@andean.com" required>
+        <button class="btn btn-ghost" type="submit">Go</button>
+      </form>
+    </div>
+
+    <p class="fine-print">You'll enter your email and password on Microsoft's secure page. Andean Dashboard never sees your password.</p>
+  </main>
+  <script src="/static/login.js"></script>
+</body>
+</html>
