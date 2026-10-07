@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Andean Dashboard</title>
   <link rel="icon" href="/static/logomark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/style.css?v=3">
+  <link rel="stylesheet" href="/static/style.css?v=4">
 </head>
 <body>
   <header class="topbar">
@@ -74,9 +74,32 @@
       <section class="tile widget widget-calendar" aria-labelledby="calendar-heading">
         <div class="widget-head">
           <h2 id="calendar-heading">Calendar</h2>
-          <span class="widget-sub"><span id="calendar-date"></span><span class="chip sample">Sample data</span></span>
+          <span class="widget-sub" id="calendar-date"></span>
         </div>
         <ol class="meetings" id="meetings"></ol>
+        <p class="widget-note" id="calendar-note" hidden></p>
+        <form class="calendar-connect" id="calendar-connect" hidden>
+          <label for="calendar-url">Connect your Outlook calendar</label>
+          <div class="calendar-connect-row">
+            <input id="calendar-url" type="url" required autocomplete="off" spellcheck="false"
+              placeholder="https://outlook.office365.com/owa/calendar/…/calendar.ics">
+            <button class="btn btn-small" type="submit">Connect</button>
+          </div>
+          <p class="form-error" id="calendar-error" role="alert" hidden></p>
+          <details class="calendar-help">
+            <summary>Where do I find this link?</summary>
+            <ol>
+              <li>Open <a href="https://outlook.office.com/calendar/" target="_blank" rel="noopener noreferrer">Outlook on the web</a> and go to <strong>Settings → Calendar → Shared calendars</strong>.</li>
+              <li>Under <strong>Publish a calendar</strong>, pick your calendar and <strong>Can view all details</strong>, then click <strong>Publish</strong>.</li>
+              <li>Copy the <strong>ICS</strong> link (it ends in <code>.ics</code>) and paste it here.</li>
+            </ol>
+            <p>Anyone with that link can see your calendar, so it's kept on the dashboard server and only your own meetings are shown to you. Unpublish it in Outlook to revoke it.</p>
+          </details>
+        </form>
+        <div class="calendar-foot" id="calendar-foot" hidden>
+          <span>Outlook calendar</span>
+          <button class="link-btn" id="calendar-disconnect" type="button">Disconnect</button>
+        </div>
       </section>
 
       <section class="tile widget widget-machines" aria-labelledby="machines-heading">
@@ -117,6 +140,6 @@
   </aside>
   <script src="/static/app.js?v=3"></script>
   <script src="/static/panel.js?v=3"></script>
-  <script src="/static/widgets.js?v=3"></script>
+  <script src="/static/widgets.js?v=4"></script>
 </body>
 </html>

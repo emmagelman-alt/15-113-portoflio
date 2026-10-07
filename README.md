@@ -13,7 +13,7 @@ Internal dashboard for Andean employees. It collects to-dos from three places in
 - **Attach files** (📎 or paste) to any reply, up to 10 MB each. Coworker conversations show them inline; Notion comments get them as real Notion attachments (up to 3); Slack replies upload them when the app has `files:write`, otherwise they include a link to the file on the dashboard.
 - **Linked docs:** Figma files and Google Docs/Sheets/Slides preview inline. Linked Notion pages render inside the panel when they're shared with the connection.
 
-The layout follows the Figma "Dashboard" frame: to-dos on the left; **Calendar**, **Machines** and the **sherpa.ai** assistant on the right. Those three panels show labelled sample data (`static/widgets.js`) until real sources are connected.
+The layout follows the Figma "Dashboard" frame: to-dos on the left; **Calendar**, **Machines** and the **sherpa.ai** assistant on the right. **Calendar** shows today's meetings from each person's own Outlook calendar; **Machines** and **sherpa.ai** show labelled sample data (`static/widgets.js`) until real sources are connected.
 
 Employees sign in with their Andean Microsoft (Outlook) account. The login page (from the Figma design) takes their work email, then hands off to Microsoft's own page, prefilled, for the password and any two-factor code, so the dashboard never handles passwords. **Remember me** keeps them signed in for 30 days instead of 8 hours, and **Forgot?** opens Microsoft's password reset. The password is entered on Microsoft's page, so this app never sees or stores it.
 
@@ -74,6 +74,16 @@ Only accounts in the Andean tenant can sign in. An employee record is created th
 
 For an existing database, skip the script. Share the database with the connection, put its URL or ID in `NOTION_TASKS_DATABASE_ID`, and set `NOTION_ASSIGNEE_PROPERTY` / `NOTION_STATUS_PROPERTY` / `NOTION_DUE_PROPERTY` if its columns are named differently.
 
+## Outlook calendar
+
+Each employee connects their own calendar from the Calendar panel. No Microsoft app registration is needed:
+
+1. In Outlook on the web, go to **Settings → Calendar → Shared calendars**.
+2. Under **Publish a calendar**, choose the calendar and **Can view all details**, then **Publish**.
+3. Copy the **ICS** link (ends in `.ics`) and paste it into the Calendar panel.
+
+The link is stored on the server (`calendar_links` table) and only that person's meetings are returned to them. Only `https://outlook.office365.com`, `outlook.office.com` and `outlook.live.com` links are accepted, including after redirects, so the server can't be pointed elsewhere. Unpublishing the calendar in Outlook revokes the link. Once Microsoft sign-in is set up, this can move to Microsoft Graph (`Calendars.Read`).
+
 ## How it's built
 
 - **FastAPI** backend (`app/`), with **SQLAlchemy** on SQLite locally and Postgres in production
@@ -84,6 +94,8 @@ For an existing database, skip the script. Share the database with the connectio
 |---|---|
 | `app/auth.py` | Microsoft OIDC login, sessions, CSRF |
 | `app/todos.py` | To-do API: list, add, send to coworker, complete, delete |
+| `app/integrations/outlook.py` | Outlook calendar: link validation, .ics fetch, recurring events in the viewer's time zone |
+| `static/widgets.js` | Calendar, Machines and sherpa.ai panels |
 | `app/details.py` | Task panel API: Slack thread and replies, Notion page/comments/edits, coworker conversation, linked-doc previews |
 | `static/panel.js` | The task panel UI |
 | `app/integrations/slack.py` | Slack events + "Add to dashboard" shortcut (Socket Mode or HTTP) |

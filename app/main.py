@@ -12,7 +12,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from . import auth, details, todos
 from .config import settings
 from .db import Base, engine
-from .integrations import notion, slack
+from .integrations import notion, outlook, slack
 
 STATIC = Path(__file__).resolve().parent.parent / "static"
 
@@ -68,6 +68,7 @@ app.include_router(todos.router)
 app.include_router(details.router)
 app.include_router(slack.router)
 app.include_router(notion.router)
+app.include_router(outlook.router)
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 

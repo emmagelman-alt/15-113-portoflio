@@ -1,15 +1,8 @@
-/* Right-hand column of the dashboard (Figma: "Dashboard" frame, Calendar / Machines /
-   sherpa.ai panels). None of these has a data source yet, so they render the design's
-   sample content and each panel is labelled "Sample data". Replace SAMPLE with real
-   sources (e.g. Outlook calendar via Microsoft Graph) when they exist. Uses helpers from
-   app.js and panel.js. */
+/* Right-hand column of the dashboard (Figma: "Dashboard" frame). Calendar reads the
+   employee's Outlook calendar (app/integrations/outlook.py). Machines and sherpa.ai have
+   no data source yet, so they render the design's sample content, labelled "Sample data".
+   Uses helpers from app.js and panel.js. */
 const SAMPLE = {
-  meetings: [
-    { time: "10:00 – 10:45", title: "All hands", tag: "All hands", kind: "internal" },
-    { time: "11:30 – 12:00", title: "Design team sync", tag: "Team", kind: "notion" },
-    { time: "14:00 – 15:00", title: "Brand guidelines review", tag: "Team", kind: "notion" },
-    { time: "16:30 – 17:00", title: "Q4 launch check-in", tag: "Team", kind: "notion" },
-  ],
   machines: [
     { name: "Machine 01", running: true },
     { name: "Machine 02", running: true },
@@ -25,13 +18,60 @@ const SAMPLE = {
   ],
 };
 
-function renderCalendar() {
-  $("calendar-date").textContent = new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-  $("meetings").replaceChildren(...SAMPLE.meetings.map((m) => el("li", { class: "meeting" },
-    el("span", { class: "meeting-time" }, m.time),
-    el("span", { class: "meeting-title" }, m.title),
-    el("span", { class: `badge badge-${m.kind}` }, m.tag))));
+const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+const clock = (iso) => new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+
+function meetingRow(e) {
+  const when = e.all_day ? "All day" : `${clock(e.start)} – ${clock(e.end)}`;
+  return el("li", { class: "meeting" },
+    el("span", { class: "meeting-time" }, when),
+    el("span", { class: "meeting-title" }, e.title),
+    e.tag ? el("span", { class: `badge ${/^(all hands|company)$/i.test(e.tag) ? "badge-internal" : "badge-notion"}` }, e.tag) : null);
 }
+
+async function renderCalendar() {
+  let data;
+  try {
+    data = await api(`/api/calendar/today?tz=${encodeURIComponent(TZ)}`);
+  } catch (e) {
+    $("calendar-note").textContent = e.message;
+    $("calendar-note").hidden = false;
+    return;
+  }
+  const [y, m, d] = data.date.split("-").map(Number);
+  $("calendar-date").textContent = new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  $("calendar-connect").hidden = data.connected;
+  $("calendar-foot").hidden = !data.connected;
+  $("meetings").replaceChildren(...data.events.map(meetingRow));
+  const note = data.error || (data.connected && !data.events.length ? "No meetings today." : "");
+  $("calendar-note").textContent = note;
+  $("calendar-note").hidden = !note;
+  $("calendar-note").classList.toggle("form-error", !!data.error);
+}
+
+$("calendar-connect").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const button = e.target.querySelector("button");
+  const err = $("calendar-error");
+  err.hidden = true;
+  button.disabled = true;
+  try {
+    await api("/api/calendar/link", { method: "PUT", body: JSON.stringify({ url: $("calendar-url").value }) });
+    $("calendar-url").value = "";
+    await renderCalendar();
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.hidden = false;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$("calendar-disconnect").addEventListener("click", async () => {
+  if (!confirm("Disconnect your Outlook calendar from the dashboard?")) return;
+  await api("/api/calendar/link", { method: "DELETE" }).catch((e) => alert(e.message));
+  await renderCalendar();
+});
 
 function renderMachines() {
   const running = SAMPLE.machines.filter((m) => m.running).length;
@@ -52,6 +92,11 @@ function renderSherpa() {
       el("button", { class: "btn btn-ghost btn-small", type: "button", disabled: "" }, "Preview")) : null)));
 }
 
-renderCalendar();
 renderMachines();
 renderSherpa();
+// Calendar needs the signed-in user (app.js loads it); refresh every 5 minutes
+(function waitForMe() {
+  if (!state.me) return setTimeout(waitForMe, 100);
+  renderCalendar();
+  setInterval(() => { if (!document.hidden) renderCalendar(); }, 5 * 60 * 1000);
+})();

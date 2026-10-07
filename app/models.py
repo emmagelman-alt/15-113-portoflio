@@ -86,3 +86,13 @@ class Attachment(Base):
     shared: Mapped[bool] = mapped_column(Boolean, default=False)
     sent: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CalendarLink(Base):
+    """An employee's published Outlook calendar (.ics) link. It's a secret URL, so it never
+    leaves the server; the dashboard only returns that day's events to its owner."""
+    __tablename__ = "calendar_links"
+
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="CASCADE"), primary_key=True)
+    ics_url: Mapped[str] = mapped_column(String(2000))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
