@@ -27,8 +27,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- Left: gradient with the logomark cut out ---------- */
-.art { position: relative; overflow: hidden; }
+/* ---------- Left: gradient with the logomark cut out, colors flowing ----------
+   Two layers: the back gradient shows through the logomark and drifts down; the front
+   gradient is masked by the design's artwork (art.svg: the panel with the logomark cut
+   out) and drifts up. Each gradient tile is the design's gradient followed by its mirror
+   image, so it loops seamlessly, and at rest (offset 0) it matches the static design. */
+.art { position: relative; overflow: hidden; background: var(--night); }
 /* Covers the column at the artwork's own 720:1024 proportions so the logo never stretches */
 .art-box {
   position: absolute;
@@ -37,14 +41,42 @@ body {
   width: max(100%, calc(100vh * 720 / 1024));
   aspect-ratio: 720 / 1024;
   transform: translate(-50%, -50%);
-  /* Shows through the logomark cut-out. Kept off the bottom edge so it can't bleed
-     through the artwork's anti-aliased border there. */
-  background-repeat: no-repeat;
-  background-size: 100% calc(100% - 4px);
-  background-image: linear-gradient(0.0639deg, rgb(171, 148, 145) 1.6918%, rgb(214, 166, 142) 32.443%,
-    rgb(173, 129, 125) 42.053%, rgb(95, 105, 124) 51.663%, rgb(21, 47, 73) 71.513%, rgb(10, 0, 25) 91.393%);
 }
-.art-box img { display: block; width: 100%; height: auto; }
+.flow {
+  --loop: 18s;
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat-y;
+  background-size: 100% 200%;
+  animation: var(--loop) linear infinite;
+}
+/* Back: the design's background gradient (night at the top → taupe at the bottom), mirrored */
+.flow-back {
+  background-image: linear-gradient(180deg,
+    #0a0019 0%, #0a0019 4.3%, #152f49 14.24%, #5f697c 24.17%, #ad817d 28.97%, #d6a68e 33.78%, #ab9491 49.15%,
+    #ab9491 50.85%, #d6a68e 66.22%, #ad817d 71.03%, #5f697c 75.83%, #152f49 85.76%, #0a0019 95.7%, #0a0019 100%);
+  /* Only needed behind the logomark; keeps its colors off the artwork's outer edges */
+  clip-path: inset(32% 12% 35% 12%);
+  animation-name: flow-down;
+  /* Half a loop out of step with the front, so light meets dark behind the logomark;
+     in step, both would go dark together and the mark would vanish for half the loop */
+  animation-delay: calc(var(--loop) / -2);
+}
+/* Front: art.svg's own gradient (bronze at the top → night at the bottom), mirrored */
+.flow-front {
+  background-image: linear-gradient(180deg,
+    #d0a38e 0%, #d6a68e 3%, #ad817d 9.2%, #5f697c 15.4%, #152f49 28.2%, #0a0019 41.05%, #0a0019 50%,
+    #0a0019 58.95%, #152f49 71.8%, #5f697c 84.6%, #ad817d 90.8%, #d6a68e 97%, #d0a38e 100%);
+  -webkit-mask: url("/static/login/art.svg") 0 0 / 100% 100% no-repeat;
+  mask: url("/static/login/art.svg") 0 0 / 100% 100% no-repeat;
+  animation-name: flow-up;
+}
+/* One loop moves exactly one tile (twice the panel height), so it repeats without a seam */
+@keyframes flow-up { from { background-position: 0 0%; } to { background-position: 0 200%; } }
+@keyframes flow-down { from { background-position: 0 200%; } to { background-position: 0 0%; } }
+@media (prefers-reduced-motion: reduce) {
+  .flow { animation: none; }
+}
 
 /* ---------- Right: the form ---------- */
 .panel {
