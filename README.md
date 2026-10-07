@@ -13,6 +13,8 @@ Internal dashboard for Andean employees. It collects to-dos from three places in
 - **Attach files** (📎 or paste) to any reply, up to 10 MB each. Coworker conversations show them inline; Notion comments get them as real Notion attachments (up to 3); Slack replies upload them when the app has `files:write`, otherwise they include a link to the file on the dashboard.
 - **Linked docs:** Figma files and Google Docs/Sheets/Slides preview inline. Linked Notion pages render inside the panel when they're shared with the connection.
 
+The layout follows the Figma "Dashboard" frame: to-dos on the left; **Calendar**, **Machines** and the **sherpa.ai** assistant on the right. Those three panels show labelled sample data (`static/widgets.js`) until real sources are connected.
+
 Employees sign in with their Andean Microsoft (Outlook) account. The login page (from the Figma design) takes their work email, then hands off to Microsoft's own page, prefilled, for the password and any two-factor code, so the dashboard never handles passwords. **Remember me** keeps them signed in for 30 days instead of 8 hours, and **Forgot?** opens Microsoft's password reset. The password is entered on Microsoft's page, so this app never sees or stores it.
 
 ## Run locally

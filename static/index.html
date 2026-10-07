@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Andean Dashboard</title>
   <link rel="icon" href="/static/logomark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/style.css?v=2">
+  <link rel="stylesheet" href="/static/style.css?v=3">
 </head>
 <body>
   <header class="topbar">
@@ -16,56 +16,97 @@
     <button class="btn btn-ghost" id="logout" type="button">Sign out</button>
   </header>
 
-  <main>
-    <section class="greeting">
-      <h1 id="greeting">Welcome</h1>
-      <p id="summary">Loading your to-dos…</p>
-    </section>
+  <main class="layout">
+    <div class="column column-left">
+      <section class="tile greeting">
+        <h1 id="greeting">Welcome</h1>
+        <p id="summary">Loading your to-dos…</p>
+      </section>
 
-    <section class="card" aria-labelledby="suggested-heading" id="suggested-section" hidden>
-      <h2 id="suggested-heading">Suggested from Slack</h2>
-      <ul class="todo-list" id="suggested-list"></ul>
-    </section>
+      <section class="tile tile-suggested" aria-labelledby="suggested-heading" id="suggested-section" hidden>
+        <h2 id="suggested-heading">Suggested from Slack</h2>
+        <ul class="todo-list" id="suggested-list"></ul>
+      </section>
 
-    <section class="card" aria-labelledby="add-heading">
-      <h2 id="add-heading">Add a to-do</h2>
-      <form id="add-form" class="add-form">
-        <div class="field-title">
-          <label for="title">What needs doing?</label>
-          <input id="title" type="text" maxlength="300" required autocomplete="off" placeholder="e.g. Draft the onboarding deck">
+      <section class="tile tile-tasks">
+        <div class="add-block">
+          <h2 id="add-heading">Add a to-do</h2>
+          <form id="add-form" class="add-form" aria-labelledby="add-heading">
+            <div class="field-title">
+              <label for="title">What needs doing?</label>
+              <input id="title" type="text" maxlength="300" required autocomplete="off" placeholder="e.g. Draft the onboarding deck">
+            </div>
+            <div>
+              <label for="due">Due</label>
+              <input id="due" type="date">
+            </div>
+            <div>
+              <label for="assignee">Assign to</label>
+              <select id="assignee"></select>
+            </div>
+            <button class="btn" type="submit">Add</button>
+          </form>
+          <p id="form-error" class="form-error" role="alert" hidden></p>
         </div>
-        <div>
-          <label for="due">Due</label>
-          <input id="due" type="date">
-        </div>
-        <div>
-          <label for="assignee">Assign to</label>
-          <select id="assignee"></select>
-        </div>
-        <button class="btn" type="submit">Add</button>
-      </form>
-      <p id="form-error" class="form-error" role="alert" hidden></p>
-    </section>
 
-    <section class="card" aria-labelledby="list-heading">
-      <div class="card-head">
-        <h2 id="list-heading">My to-dos</h2>
-        <button class="btn btn-ghost btn-small" id="sync-notion" type="button" hidden>Sync Notion</button>
-      </div>
-      <div class="tabs" id="tabs" role="toolbar" aria-label="Filter by source"></div>
-      <ul class="todo-list" id="open-list"></ul>
-      <p class="empty" id="empty" hidden>Nothing here. Nice work.</p>
-      <details id="done-section" hidden>
-        <summary id="done-summary">Completed</summary>
-        <ul class="todo-list" id="done-list"></ul>
-      </details>
-    </section>
+        <div class="list-block" aria-labelledby="list-heading">
+          <div class="card-head">
+            <h2 id="list-heading">My to-dos</h2>
+            <button class="btn btn-ghost btn-small" id="sync-notion" type="button" hidden>Sync Notion</button>
+          </div>
+          <div class="tabs" id="tabs" role="toolbar" aria-label="Filter by source"></div>
+          <ul class="todo-list" id="open-list"></ul>
+          <p class="empty" id="empty" hidden>Nothing here. Nice work.</p>
+          <details id="done-section" hidden>
+            <summary id="done-summary">Completed</summary>
+            <ul class="todo-list" id="done-list"></ul>
+          </details>
+        </div>
+      </section>
 
-    <section class="card" aria-labelledby="sent-heading" id="sent-section" hidden>
-      <h2 id="sent-heading">Sent to coworkers</h2>
-      <ul class="todo-list" id="sent-list"></ul>
-    </section>
+      <section class="tile" aria-labelledby="sent-heading" id="sent-section" hidden>
+        <h2 id="sent-heading">Sent to coworkers</h2>
+        <ul class="todo-list" id="sent-list"></ul>
+      </section>
+    </div>
+
+    <div class="column column-right">
+      <section class="tile widget widget-calendar" aria-labelledby="calendar-heading">
+        <div class="widget-head">
+          <h2 id="calendar-heading">Calendar</h2>
+          <span class="widget-sub"><span id="calendar-date"></span><span class="chip sample">Sample data</span></span>
+        </div>
+        <ol class="meetings" id="meetings"></ol>
+      </section>
+
+      <section class="tile widget widget-machines" aria-labelledby="machines-heading">
+        <div class="widget-head">
+          <h2 id="machines-heading">Machines</h2>
+          <span class="widget-sub"><span id="machines-summary"></span><span class="chip sample">Sample data</span></span>
+        </div>
+        <div class="machine-cards" id="machine-cards"></div>
+      </section>
+
+      <section class="tile widget widget-sherpa" aria-labelledby="sherpa-heading">
+        <div class="widget-head">
+          <h2 id="sherpa-heading">sherpa.ai</h2>
+          <span class="widget-sub">Andean AI assistant · Git connected<span class="chip sample">Sample data</span></span>
+        </div>
+        <ol class="thread sherpa-thread" id="sherpa-thread"></ol>
+        <form class="composer sherpa-composer" aria-label="Ask sherpa.ai">
+          <textarea rows="2" placeholder="Ask sherpa.ai about a file in Git…" aria-label="Ask sherpa.ai about a file in Git" disabled></textarea>
+          <div class="composer-row">
+            <div class="composer-tools">
+              <button class="btn btn-ghost btn-small" type="button" disabled>📎 Attach</button>
+              <span class="hint">sherpa.ai isn't connected yet</span>
+            </div>
+            <button class="btn btn-small" type="submit" disabled>Send</button>
+          </div>
+        </form>
+      </section>
+    </div>
   </main>
+
   <div class="panel-backdrop" id="panel-backdrop" hidden></div>
   <aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden>
     <div class="panel-head">
@@ -74,7 +115,8 @@
     </div>
     <div class="panel-body" id="panel-body"></div>
   </aside>
-  <script src="/static/app.js?v=2"></script>
-  <script src="/static/panel.js?v=2"></script>
+  <script src="/static/app.js?v=3"></script>
+  <script src="/static/panel.js?v=3"></script>
+  <script src="/static/widgets.js?v=3"></script>
 </body>
 </html>
