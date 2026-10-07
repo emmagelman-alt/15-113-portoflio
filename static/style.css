@@ -199,6 +199,9 @@ main { max-width: 860px; margin: 0 auto; padding: 32px 24px 64px; }
 .icon-btn:hover { color: var(--danger); background: var(--bg); }
 
 .todo .actions { display: flex; gap: 6px; flex: none; }
+/* Suggestions: buttons sit beside the text when there's room, below it when there isn't */
+.todo:has(.actions) { flex-wrap: wrap; }
+.todo:has(.actions) .body { flex: 1 1 280px; }
 .todo .actions .btn { padding: 5px 12px; font-size: 13px; }
 
 .empty { color: var(--muted); text-align: center; padding: 24px 0 8px; margin: 0; }
