@@ -1,0 +1,52 @@
+# Slack app manifest for the Andean Dashboard.
+#
+# Install: https://api.slack.com/apps -> Create New App -> From an app manifest -> pick the
+# workspace -> paste this file -> Create -> Install to Workspace. See the README for which
+# tokens go in .env.
+#
+# This manifest uses Socket Mode, so Slack reaches a laptop with no public URL
+# (needs SLACK_APP_TOKEN). For production over HTTP:
+#   1. Set socket_mode_enabled to false.
+#   2. Uncomment both request_url lines, replacing https://dashboard.example.com with BASE_URL.
+#      Slack checks the events URL when you save, so the app must already be running there
+#      with SLACK_BOT_TOKEN and SLACK_SIGNING_SECRET set.
+#   3. Leave SLACK_APP_TOKEN unset in production.
+display_information:
+  name: Andean Dashboard
+  description: Turns Slack requests into to-dos on the Andean Dashboard.
+  background_color: "#152f49"
+features:
+  bot_user:
+    display_name: Andean Dashboard
+    always_online: true
+  shortcuts:
+    - name: Add to dashboard
+      type: message
+      callback_id: add_to_dashboard
+      description: Save this message as a to-do on your Andean Dashboard
+oauth_config:
+  scopes:
+    bot:
+      - channels:history   # message events in public channels the bot is in
+      - groups:history     # ...and in private channels it's invited to
+      - channels:read      # channel names for the to-do's "#channel" line
+      - groups:read
+      - users:read         # names for @mentions
+      - users:read.email   # emails, to match Slack users to employees
+      - chat:write         # confirmations, and task-panel replies when no user token is set
+      - files:write        # files attached to task-panel replies (otherwise they're sent as dashboard links)
+      - commands           # the message shortcut
+    user:
+      - chat:write         # replies from the task panel post as the employee
+settings:
+  event_subscriptions:
+    # request_url: https://dashboard.example.com/slack/events
+    bot_events:
+      - message.channels
+      - message.groups
+  interactivity:
+    is_enabled: true
+    # request_url: https://dashboard.example.com/slack/interactions
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false

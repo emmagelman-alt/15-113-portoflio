@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Andean Dashboard</title>
+  <link rel="icon" href="/static/logomark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css?v=4">
+</head>
+<body>
+  <header class="topbar">
+    <img class="mark" src="/static/logomark.svg" alt="">
+    <span class="title">Andean Dashboard</span>
+    <span class="spacer"></span>
+    <span class="who" id="who"></span>
+    <button class="btn btn-ghost" id="logout" type="button">Sign out</button>
+  </header>
+
+  <main class="layout">
+    <div class="column column-left">
+      <section class="tile greeting">
+        <h1 id="greeting">Welcome</h1>
+        <p id="summary">Loading your to-dos…</p>
+      </section>
+
+      <section class="tile tile-suggested" aria-labelledby="suggested-heading" id="suggested-section" hidden>
+        <h2 id="suggested-heading">Suggested from Slack</h2>
+        <ul class="todo-list" id="suggested-list"></ul>
+      </section>
+
+      <section class="tile tile-tasks">
+        <div class="add-block">
+          <h2 id="add-heading">Add a to-do</h2>
+          <form id="add-form" class="add-form" aria-labelledby="add-heading">
+            <div class="field-title">
+              <label for="title">What needs doing?</label>
+              <input id="title" type="text" maxlength="300" required autocomplete="off" placeholder="e.g. Draft the onboarding deck">
+            </div>
+            <div>
+              <label for="due">Due</label>
+              <input id="due" type="date">
+            </div>
+            <div>
+              <label for="assignee">Assign to</label>
+              <select id="assignee"></select>
+            </div>
+            <button class="btn" type="submit">Add</button>
+          </form>
+          <p id="form-error" class="form-error" role="alert" hidden></p>
+        </div>
+
+        <div class="list-block" aria-labelledby="list-heading">
+          <div class="card-head">
+            <h2 id="list-heading">My to-dos</h2>
+            <button class="btn btn-ghost btn-small" id="sync-notion" type="button" hidden>Sync Notion</button>
+          </div>
+          <div class="tabs" id="tabs" role="toolbar" aria-label="Filter by source"></div>
+          <ul class="todo-list" id="open-list"></ul>
+          <p class="empty" id="empty" hidden>Nothing here. Nice work.</p>
+          <details id="done-section" hidden>
+            <summary id="done-summary">Completed</summary>
+            <ul class="todo-list" id="done-list"></ul>
+          </details>
+        </div>
+      </section>
+
+      <section class="tile" aria-labelledby="sent-heading" id="sent-section" hidden>
+        <h2 id="sent-heading">Sent to coworkers</h2>
+        <ul class="todo-list" id="sent-list"></ul>
+      </section>
+    </div>
+
+    <div class="column column-right">
+      <section class="tile widget widget-calendar" aria-labelledby="calendar-heading">
+        <div class="widget-head">
+          <h2 id="calendar-heading">Calendar</h2>
+          <span class="widget-sub" id="calendar-date"></span>
+        </div>
+        <ol class="meetings" id="meetings"></ol>
+        <p class="widget-note" id="calendar-note" hidden></p>
+        <form class="calendar-connect" id="calendar-connect" hidden>
+          <label for="calendar-url">Connect your Outlook calendar</label>
+          <div class="calendar-connect-row">
+            <input id="calendar-url" type="url" required autocomplete="off" spellcheck="false"
+              placeholder="https://outlook.office365.com/owa/calendar/…/calendar.ics">
+            <button class="btn btn-small" type="submit">Connect</button>
+          </div>
+          <p class="form-error" id="calendar-error" role="alert" hidden></p>
+          <details class="calendar-help">
+            <summary>Where do I find this link?</summary>
+            <ol>
+              <li>Open <a href="https://outlook.office.com/calendar/" target="_blank" rel="noopener noreferrer">Outlook on the web</a> and go to <strong>Settings → Calendar → Shared calendars</strong>.</li>
+              <li>Under <strong>Publish a calendar</strong>, pick your calendar and <strong>Can view all details</strong>, then click <strong>Publish</strong>.</li>
+              <li>Copy the <strong>ICS</strong> link (it ends in <code>.ics</code>) and paste it here.</li>
+            </ol>
+            <p>Anyone with that link can see your calendar, so it's kept on the dashboard server and only your own meetings are shown to you. Unpublish it in Outlook to revoke it.</p>
+          </details>
+        </form>
+        <div class="calendar-foot" id="calendar-foot" hidden>
+          <span>Outlook calendar</span>
+          <button class="link-btn" id="calendar-disconnect" type="button">Disconnect</button>
+        </div>
+      </section>
+
+      <section class="tile widget widget-machines" aria-labelledby="machines-heading">
+        <div class="widget-head">
+          <h2 id="machines-heading">Machines</h2>
+          <span class="widget-sub"><span id="machines-summary"></span><span class="chip sample">Sample data</span></span>
+        </div>
+        <div class="machine-cards" id="machine-cards"></div>
+      </section>
+
+      <section class="tile widget widget-sherpa" aria-labelledby="sherpa-heading">
+        <div class="widget-head">
+          <h2 id="sherpa-heading">sherpa.ai</h2>
+          <span class="widget-sub">Andean AI assistant · Git connected<span class="chip sample">Sample data</span></span>
+        </div>
+        <ol class="thread sherpa-thread" id="sherpa-thread"></ol>
+        <form class="composer sherpa-composer" aria-label="Ask sherpa.ai">
+          <textarea rows="2" placeholder="Ask sherpa.ai about a file in Git…" aria-label="Ask sherpa.ai about a file in Git" disabled></textarea>
+          <div class="composer-row">
+            <div class="composer-tools">
+              <button class="btn btn-ghost btn-small" type="button" disabled>📎 Attach</button>
+              <span class="hint">sherpa.ai isn't connected yet</span>
+            </div>
+            <button class="btn btn-small" type="submit" disabled>Send</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <div class="panel-backdrop" id="panel-backdrop" hidden></div>
+  <aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden>
+    <div class="panel-head">
+      <div class="panel-badges" id="panel-badges"></div>
+      <button class="icon-btn" id="panel-close" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="panel-body" id="panel-body"></div>
+  </aside>
+  <script src="/static/app.js?v=3"></script>
+  <script src="/static/panel.js?v=3"></script>
+  <script src="/static/widgets.js?v=4"></script>
+</body>
+</html>

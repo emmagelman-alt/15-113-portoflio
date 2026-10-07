@@ -1,0 +1,98 @@
+from __future__ import annotations
+
+from datetime import date, datetime, timezone
+from typing import Optional
+
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from .db import Base
+
+SOURCES = ("internal", "slack", "notion")
+STATUSES = ("suggested", "open", "done", "dismissed")
+
+
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class Employee(Base):
+    __tablename__ = "employees"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # Microsoft Entra object id: the stable identity key (emails can change)
+    ms_oid: Mapped[Optional[str]] = mapped_column(String(64), unique=True)
+    email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    # Filled in later so Slack mentions / Notion assignees map to the right person
+    slack_user_id: Mapped[Optional[str]] = mapped_column(String(32), unique=True)
+    notion_user_id: Mapped[Optional[str]] = mapped_column(String(64), unique=True)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+
+class Todo(Base):
+    __tablename__ = "todos"
+    __table_args__ = (UniqueConstraint("owner_id", "source", "source_id", name="uq_todo_source"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="CASCADE"), index=True)
+    created_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey("employees.id", ondelete="SET NULL"))
+    title: Mapped[str] = mapped_column(String(300))
+    notes: Mapped[str] = mapped_column(Text, default="")
+    source: Mapped[str] = mapped_column(String(16), default="internal")
+    # Slack message ts / Notion page id, used to avoid duplicate imports
+    source_id: Mapped[Optional[str]] = mapped_column(String(200))
+    source_url: Mapped[Optional[str]] = mapped_column(String(1000))
+    status: Mapped[str] = mapped_column(String(16), default="open", index=True)
+    due_date: Mapped[Optional[date]] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+    owner: Mapped[Employee] = relationship(foreign_keys=[owner_id])
+    created_by: Mapped[Optional[Employee]] = relationship(foreign_keys=[created_by_id])
+
+
+class TodoComment(Base):
+    """Conversation on a dashboard to-do between the person who sent it and its owner."""
+    __tablename__ = "todo_comments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    todo_id: Mapped[int] = mapped_column(ForeignKey("todos.id", ondelete="CASCADE"), index=True)
+    author_id: Mapped[Optional[int]] = mapped_column(ForeignKey("employees.id", ondelete="SET NULL"))
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    author: Mapped[Optional[Employee]] = relationship()
+
+
+class Attachment(Base):
+    """A file attached from the task panel. Stored in the database so it survives redeploys."""
+    __tablename__ = "attachments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    todo_id: Mapped[int] = mapped_column(ForeignKey("todos.id", ondelete="CASCADE"), index=True)
+    # Set once the file is sent in a dashboard conversation
+    comment_id: Mapped[Optional[int]] = mapped_column(ForeignKey("todo_comments.id", ondelete="SET NULL"), index=True)
+    uploader_id: Mapped[Optional[int]] = mapped_column(ForeignKey("employees.id", ondelete="SET NULL"))
+    filename: Mapped[str] = mapped_column(String(255))
+    content_type: Mapped[str] = mapped_column(String(100))
+    size: Mapped[int] = mapped_column(Integer)
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    # Linked from a Slack reply: any signed-in employee may open it
+    shared: Mapped[bool] = mapped_column(Boolean, default=False)
+    sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CalendarLink(Base):
+    """An employee's published Outlook calendar (.ics) link. It's a secret URL, so it never
+    leaves the server; the dashboard only returns that day's events to its owner."""
+    __tablename__ = "calendar_links"
+
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="CASCADE"), primary_key=True)
+    ics_url: Mapped[str] = mapped_column(String(2000))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)

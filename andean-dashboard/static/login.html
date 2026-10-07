@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Andean Dashboard</title>
+  <link rel="icon" href="/static/logomark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/login/login.css">
+</head>
+<body>
+  <div class="art" aria-hidden="true">
+    <div class="art-box">
+      <div class="flow flow-back"></div>
+      <div class="flow flow-front"></div>
+    </div>
+  </div>
+
+  <main class="panel">
+    <form id="login-form" class="login" action="/auth/login" method="get" novalidate>
+      <h1>LOGIN</h1>
+
+      <div class="fields">
+        <label class="field" for="email">
+          <span class="label">Email</span>
+          <input id="email" name="email" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+          <img class="line" src="/static/login/line.svg" alt="" width="307.307" height="4">
+        </label>
+
+        <div class="field">
+          <span class="label">Password</span>
+          <button id="continue" class="continue" type="submit">
+            <span id="continue-text">Continue with Microsoft</span><span aria-hidden="true">→</span>
+          </button>
+          <img class="line" src="/static/login/line.svg" alt="" width="307.307" height="4">
+        </div>
+      </div>
+
+      <div class="options">
+        <label class="remember">
+          <input id="remember" name="remember" type="checkbox" value="1">
+          <span class="tick" aria-hidden="true">
+            <img class="circle" src="/static/login/circle.svg" alt="" width="18.9044" height="18.9044">
+            <img class="check" src="/static/login/check.svg" alt="" width="13.1891" height="13.1891">
+          </span>
+          Remember me
+        </label>
+        <a class="forgot" href="https://passwordreset.microsoftonline.com/" target="_blank" rel="noopener noreferrer">Forgot?</a>
+      </div>
+
+      <p id="error" class="message error" role="alert" hidden></p>
+      <p id="note" class="message">You'll enter your password on Microsoft's secure page. The dashboard never sees it.</p>
+    </form>
+  </main>
+  <script src="/static/login.js?v=3"></script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+/* Login page, from the Figma design "Desktop - 16" (1440 × 1024).
+   Always dark, so it doesn't follow the dashboard's light/dark tokens.
+   Paralucent is licensed and not bundled: it renders where installed, otherwise
+   the brand fallback stack from ANDEAN-DESIGN/type applies. */
+:root {
+  --ink-black: #000d19;
+  --night: #0a0119;
+  --andean-white: #f0eff1;
+  --light-bronze: #d6a68e;
+  --font-primary: "Paralucent", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  background: var(--ink-black);
+  color: var(--andean-white);
+  font-family: var(--font-primary);
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Left: gradient with the logomark cut out, colors flowing ----------
+   Two layers: the back gradient shows through the logomark and drifts down; the front
+   gradient is masked by the design's artwork (art.svg: the panel with the logomark cut
+   out) and drifts up. Each gradient tile is the design's gradient followed by its mirror
+   image, so it loops seamlessly, and at rest (offset 0) it matches the static design. */
+.art { position: relative; overflow: hidden; background: var(--night); }
+/* Covers the column at the artwork's own 720:1024 proportions so the logo never stretches */
+.art-box {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, calc(100vh * 720 / 1024));
+  aspect-ratio: 720 / 1024;
+  transform: translate(-50%, -50%);
+}
+.flow {
+  --loop: 18s;
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat-y;
+  background-size: 100% 200%;
+  animation: var(--loop) linear infinite;
+}
+/* Back: the design's background gradient (night at the top → taupe at the bottom), mirrored */
+.flow-back {
+  background-image: linear-gradient(180deg,
+    #0a0019 0%, #0a0019 4.3%, #152f49 14.24%, #5f697c 24.17%, #ad817d 28.97%, #d6a68e 33.78%, #ab9491 49.15%,
+    #ab9491 50.85%, #d6a68e 66.22%, #ad817d 71.03%, #5f697c 75.83%, #152f49 85.76%, #0a0019 95.7%, #0a0019 100%);
+  /* Only needed behind the logomark; keeps its colors off the artwork's outer edges */
+  clip-path: inset(32% 12% 35% 12%);
+  animation-name: flow-down;
+  /* Half a loop out of step with the front, so light meets dark behind the logomark;
+     in step, both would go dark together and the mark would vanish for half the loop */
+  animation-delay: calc(var(--loop) / -2);
+}
+/* Front: art.svg's own gradient (bronze at the top → night at the bottom), mirrored */
+.flow-front {
+  background-image: linear-gradient(180deg,
+    #d0a38e 0%, #d6a68e 3%, #ad817d 9.2%, #5f697c 15.4%, #152f49 28.2%, #0a0019 41.05%, #0a0019 50%,
+    #0a0019 58.95%, #152f49 71.8%, #5f697c 84.6%, #ad817d 90.8%, #d6a68e 97%, #d0a38e 100%);
+  -webkit-mask: url("/static/login/art.svg") 0 0 / 100% 100% no-repeat;
+  mask: url("/static/login/art.svg") 0 0 / 100% 100% no-repeat;
+  animation-name: flow-up;
+}
+/* One loop moves exactly one tile (twice the panel height), so it repeats without a seam */
+@keyframes flow-up { from { background-position: 0 0%; } to { background-position: 0 200%; } }
+@keyframes flow-down { from { background-position: 0 200%; } to { background-position: 0 0%; } }
+@media (prefers-reduced-motion: reduce) {
+  .flow { animation: none; }
+}
+
+/* ---------- Right: the form ---------- */
+.panel {
+  background: var(--night);
+  display: flex;
+  align-items: flex-start;
+  /* LOGIN sits at y=371 on the 1024px-tall design, i.e. 141px above the middle */
+  padding: max(48px, calc(50vh - 141px)) 36px 48px 45px;
+}
+
+.login { width: 100%; max-width: 639px; }
+
+h1 {
+  margin: 0 0 67px;
+  font-size: 96px;
+  font-weight: 300;
+  line-height: 82px;
+  letter-spacing: -0.01em;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 307px));
+  column-gap: 22px;
+}
+
+.field { display: flex; flex-direction: column; min-width: 0; }
+.label { font-size: 20px; line-height: 24px; }
+.line { display: block; width: 100%; height: 4px; }
+
+.field input,
+.continue {
+  height: 43px;
+  margin: 0;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--andean-white);
+  font: inherit;
+  font-size: 20px;
+}
+.field input:focus { outline: none; }
+.field:focus-within .line { filter: drop-shadow(0 0 3px rgba(214, 166, 142, 0.9)); }
+
+.continue {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  font-size: 17px;
+}
+.continue span:last-child { font-size: 20px; transition: transform .15s ease; }
+.continue:hover span:last-child { transform: translateX(4px); }
+.continue:focus-visible { outline: 2px solid var(--light-bronze); outline-offset: 2px; }
+.continue:disabled { cursor: default; opacity: .5; }
+.continue:disabled span:last-child { transform: none; }
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 307px));
+  column-gap: 22px;
+  margin-top: 15px;
+  font-size: 15px;
+}
+
+.remember { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; width: max-content; }
+.remember input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.tick { position: relative; display: inline-block; width: 18.9044px; height: 18.9044px; }
+.tick .circle { position: absolute; inset: 0; }
+.tick .check { position: absolute; left: 3.08px; top: 3.52px; opacity: 0; transition: opacity .12s ease; }
+.remember input:checked + .tick .check { opacity: 1; }
+.remember input:focus-visible + .tick { outline: 2px solid var(--light-bronze); outline-offset: 3px; border-radius: 50%; }
+
+.forgot { color: inherit; text-decoration: none; justify-self: start; margin-left: -2px; }
+.forgot:hover, .forgot:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.forgot:focus-visible { outline: 2px solid var(--light-bronze); outline-offset: 2px; }
+
+.message { margin: 36px 0 0; max-width: 520px; font-size: 14px; line-height: 1.5; color: rgba(240, 239, 241, 0.65); }
+.message.error { color: var(--light-bronze); font-size: 15px; }
+.message.error + .message { margin-top: 12px; }
+
+/* ---------- Small screens: art becomes a band above the form ---------- */
+@media (max-width: 900px) {
+  body { grid-template-columns: 1fr; grid-template-rows: 180px 1fr; }
+  /* The logomark spans 35–62.5% of the artwork's height; centre it in the band */
+  .art-box { width: 100%; top: 90px; transform: translate(-50%, -48.75%); }
+  .panel { align-items: flex-start; padding: 40px 16px 48px; }
+  h1 { font-size: 64px; line-height: 60px; margin-bottom: 40px; }
+  .fields, .options { grid-template-columns: minmax(0, 1fr); row-gap: 28px; }
+  .options { row-gap: 18px; }
+  .forgot { margin-left: 0; }
+}
