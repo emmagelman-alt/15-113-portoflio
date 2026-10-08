@@ -14,6 +14,9 @@ def _split(value: str) -> List[str]:
     return [part.strip().lower() for part in value.split(",") if part.strip()]
 
 
+DEMO_PASSWORD_MIN = 16
+
+
 @dataclass(frozen=True)
 class Settings:
     app_env: str = field(default_factory=lambda: os.getenv("APP_ENV", "production"))
@@ -101,9 +104,11 @@ class Settings:
         if len(self.session_secret) < 32:
             raise RuntimeError("SESSION_SECRET must be at least 32 characters.")
         if self.is_demo:
-            # The demo holds only sample data and wrong guesses are rate-limited (app/demo.py)
-            if len(self.demo_password) < 6:
-                raise RuntimeError("APP_ENV=demo needs DEMO_PASSWORD of at least 6 characters.")
+            # A long passphrase (e.g. four random words) plus the rate limit in app/demo.py
+            # makes guessing impractical
+            if len(self.demo_password) < DEMO_PASSWORD_MIN:
+                raise RuntimeError(f"APP_ENV=demo needs DEMO_PASSWORD of at least {DEMO_PASSWORD_MIN} characters "
+                                   "(a passphrase such as four random words).")
             if not self.allowed_email_domains:
                 raise RuntimeError("APP_ENV=demo needs ALLOWED_EMAIL_DOMAINS (e.g. andean.test) so only demo accounts exist.")
         elif self.is_production and not self.microsoft_configured:
