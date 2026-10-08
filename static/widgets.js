@@ -134,10 +134,21 @@ function sherpaRow({ me = false, author, time, body, files = [], note = false })
     ...files.map(gitFileChip));
 }
 
+// Scroll the conversation (not the page) so a new row shows. A row taller than the visible
+// area is shown from its first line, so long answers can be read from the top.
+function revealSherpaRow(row) {
+  const thread = $("sherpa-thread");
+  if (row.offsetHeight <= thread.clientHeight) {
+    thread.scrollTop = thread.scrollHeight;
+  } else {
+    thread.scrollTop += row.getBoundingClientRect().top - thread.getBoundingClientRect().top - 4;
+  }
+}
+
 function addSherpaRow(message) {
   const row = sherpaRow(message);
   $("sherpa-thread").append(row);
-  $("sherpa-composer").scrollIntoView({ block: "nearest" });
+  revealSherpaRow(row);
   return row;
 }
 
@@ -182,16 +193,19 @@ $("sherpa-composer").addEventListener("submit", async (e) => {
   try {
     const data = await api("/api/sherpa", { method: "POST", body: JSON.stringify({ messages: sherpa.history }) });
     sherpa.history.push({ role: "assistant", content: data.reply });
-    pending.replaceWith(sherpaRow({ author: "sherpa.ai", time: chatTime(), body: data.reply, files: data.files || [] }));
+    const answer = sherpaRow({ author: "sherpa.ai", time: chatTime(), body: data.reply, files: data.files || [] });
+    pending.replaceWith(answer);
+    revealSherpaRow(answer);
   } catch (err) {
     // Forget the unanswered question so the next one starts from a clean conversation
     sherpa.history.pop();
-    pending.replaceWith(sherpaRow({ author: "sherpa.ai", time: chatTime(), note: true,
-      body: "Sorry, I couldn't get an answer just now. Please try again in a moment." }));
+    const sorry = sherpaRow({ author: "sherpa.ai", time: chatTime(), note: true,
+      body: "Sorry, I couldn't get an answer just now. Please try again in a moment." });
+    pending.replaceWith(sorry);
+    revealSherpaRow(sorry);
   } finally {
     setSherpaBusy(false);
-    input.focus();
-    $("sherpa-composer").scrollIntoView({ block: "nearest" });
+    input.focus({ preventScroll: true });
   }
 });
 

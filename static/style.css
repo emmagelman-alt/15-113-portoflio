@@ -357,12 +357,22 @@ a.file-chip { padding-right: 10px; }
 
 /* The message box sits right under the last message: the widget's 12px gap minus 2px
    matches the 10px between messages. An empty thread takes no space at all. */
-.sherpa-thread { gap: 10px; }
-.sherpa-thread:empty { display: none; }
+/* The conversation fills the panel and scrolls inside it (flex-basis 0, so its messages never
+   make the panel taller); the message box stays at the bottom */
+.sherpa-thread {
+  gap: 10px;
+  flex: 1 1 0;
+  min-height: 240px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 4px;
+}
+.sherpa-thread:empty::before { content: "Ask about logos, colors or type in Andean's brand library."; color: var(--muted); font-size: 14px; }
 .sherpa-row { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .sherpa-row.me { align-items: flex-end; }
 .sherpa-row > * { width: min(520px, 100%); }
-.sherpa-composer { margin-top: -2px; }
+.sherpa-composer { margin-top: auto; }
 .sherpa-composer textarea:disabled { cursor: not-allowed; }
 /* Source links in rows are plain muted text in the design; underline on hover */
 .todo .meta a { text-decoration: none; }
@@ -403,3 +413,9 @@ a.file-chip { padding-right: 10px; }
 .widget-machines.collapsed .collapse-toggle svg { transform: rotate(180deg); }
 .widget-machines.collapsed .widget-head { gap: 8px; }
 @media (prefers-reduced-motion: reduce) { .collapse-toggle svg { transition: none; } }
+
+/* Stacked columns: nothing stretches the panel, so give the conversation its own room
+   (after the widget rules above so it takes precedence) */
+@media (max-width: 1200px) {
+  .widget-sherpa { min-height: 620px; }
+}
