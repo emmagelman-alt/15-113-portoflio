@@ -58,6 +58,12 @@ class Settings:
     notion_done_statuses: List[str] = field(default_factory=lambda: _split(os.getenv("NOTION_DONE_STATUSES", "Done")))
     notion_sync_seconds: int = field(default_factory=lambda: int(os.getenv("NOTION_SYNC_SECONDS", "120")))
 
+    # sherpa.ai (app/sherpa.py): Claude reading one GitHub repo, read-only
+    anthropic_api_key: str = field(default_factory=lambda: os.getenv("ANTHROPIC_API_KEY", ""))
+    github_token: str = field(default_factory=lambda: os.getenv("GITHUB_TOKEN", ""))
+    github_repo: str = field(default_factory=lambda: os.getenv("GITHUB_REPO", "").strip().strip("/"))
+    github_branch: str = field(default_factory=lambda: os.getenv("GITHUB_BRANCH", "").strip() or "main")
+
     @property
     def slack_configured(self) -> bool:
         return bool(self.slack_bot_token and self.slack_signing_secret)
@@ -65,6 +71,10 @@ class Settings:
     @property
     def notion_configured(self) -> bool:
         return bool(self.notion_token and self.notion_tasks_database_id)
+
+    @property
+    def sherpa_configured(self) -> bool:
+        return bool(self.anthropic_api_key and self.github_token and self.github_repo)
 
     @property
     def is_production(self) -> bool:

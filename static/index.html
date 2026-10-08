@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Andean Dashboard</title>
   <link rel="icon" href="/static/logomark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/style.css?v=5">
+  <link rel="stylesheet" href="/static/style.css?v=6">
 </head>
 <body>
   <header class="topbar">
@@ -121,17 +121,17 @@
       <section class="tile widget widget-sherpa" aria-labelledby="sherpa-heading">
         <div class="widget-head">
           <h2 id="sherpa-heading">sherpa.ai</h2>
-          <span class="widget-sub">Andean AI assistant · Git connected<span class="chip sample">Sample data</span></span>
+          <span class="widget-sub"><span id="sherpa-status">Andean AI assistant</span><span class="chip sample" id="sherpa-sample">Sample data</span></span>
         </div>
         <ol class="thread sherpa-thread" id="sherpa-thread"></ol>
-        <form class="composer sherpa-composer" aria-label="Ask sherpa.ai">
-          <textarea rows="2" placeholder="Ask sherpa.ai about a file in Git…" aria-label="Ask sherpa.ai about a file in Git" disabled></textarea>
+        <form class="composer sherpa-composer" id="sherpa-composer" aria-label="Ask sherpa.ai">
+          <textarea id="sherpa-input" rows="2" placeholder="Ask sherpa.ai about a file in Git…" aria-label="Ask sherpa.ai about a file in Git" disabled></textarea>
           <div class="composer-row">
             <div class="composer-tools">
               <button class="btn btn-ghost btn-small" type="button" disabled>📎 Attach</button>
-              <span class="hint">sherpa.ai isn't connected yet</span>
+              <span class="hint" id="sherpa-hint" role="status">Checking sherpa.ai…</span>
             </div>
-            <button class="btn btn-small" type="submit" disabled>Send</button>
+            <button class="btn btn-small" id="sherpa-send" type="submit" disabled>Send</button>
           </div>
         </form>
       </section>
@@ -148,6 +148,6 @@
   </aside>
   <script src="/static/app.js?v=5"></script>
   <script src="/static/panel.js?v=3"></script>
-  <script src="/static/widgets.js?v=5"></script>
+  <script src="/static/widgets.js?v=6"></script>
 </body>
 </html>
