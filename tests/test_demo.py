@@ -3,7 +3,7 @@ import dataclasses
 import pytest
 from fastapi.testclient import TestClient
 
-from app import demo, main
+from app import demo, details, main
 from app.config import Settings
 from app.main import app
 
@@ -15,6 +15,7 @@ def demo_mode(monkeypatch):
     on = dataclasses.replace(demo.settings, app_env="demo", demo_password=PASSWORD, allowed_email_domains=["andean.test"])
     monkeypatch.setattr(demo, "settings", on)
     monkeypatch.setattr(main, "settings", on)
+    monkeypatch.setattr(details, "settings", on)
     demo._failures.clear()
     yield
     demo._failures.clear()
@@ -72,15 +73,22 @@ def test_sign_in_gets_starter_todos_once(demo_mode):
     me = client.get("/api/me").json()
     assert me["email"] == "grader@andean.test"
     todos = client.get("/api/todos").json()
-    assert len(todos) == 5
+    assert len(todos) == 6
+    [suggestion] = [t for t in todos if t["status"] == "suggested"]
+    assert suggestion["source"] == "slack" and suggestion["title"].startswith("@grader can you")
+    todos = [t for t in todos if t["status"] == "open"]
     assert {t["created_by"]["name"] for t in todos} == {"Priya Shah", "Sam Rivera", "Grader"}
     priya_todo = next(t for t in todos if t["created_by"]["name"] == "Priya Shah")
     client.headers["X-CSRF-Token"] = me["csrf_token"]
     assert client.get(f"/api/todos/{priya_todo['id']}/detail").json()["comments"][0]["author"] == "Priya Shah"
+    # The sample Slack request opens in the panel with an explanation, and can be accepted
+    panel = client.get(f"/api/todos/{suggestion['id']}/detail").json()
+    assert "sample Slack request" in panel["slack"]["error"]
+    assert client.patch(f"/api/todos/{suggestion['id']}", json={"status": "open"}).json()["status"] == "open"
 
     again = TestClient(app)
     sign_in(again)
-    assert len(again.get("/api/todos").json()) == 5  # not duplicated on the next visit
+    assert len(again.get("/api/todos").json()) == 6  # not duplicated on the next visit
 
 
 def test_demo_login_is_off_outside_demo_mode():

@@ -117,16 +117,19 @@ def test_parses_outlook_feed_with_recurrence_timezones_and_all_day():
 
 def test_connect_today_and_disconnect(feed):
     emma = login("emma@andean.test")
-    assert emma.get("/api/calendar/today", params={"tz": "UTC"}).json()["connected"] is False
+    before = emma.get("/api/calendar/today", params={"tz": "UTC"}).json()
+    assert before["connected"] is False and before["sample"] is True  # sample calendar until connected
 
     assert emma.put("/api/calendar/link", json={"url": GOOD}).json() == {"connected": True}
     data = emma.get("/api/calendar/today", params={"tz": "UTC"}).json()
     assert data["connected"] and [e["title"] for e in data["events"]] == ["Q4 launch check-in"]
     assert feed["calls"] == [GOOD]  # validated once, then served from the 5-minute cache
 
-    # Another employee never sees Emma's calendar or link
+    # Another employee never sees Emma's calendar: they get the sample one
     sam = login("sam@andean.test")
-    assert sam.get("/api/calendar/today").json() == {"connected": False, "date": sam.get("/api/calendar/today").json()["date"], "events": []}
+    theirs = sam.get("/api/calendar/today", params={"tz": "UTC"}).json()
+    assert theirs["connected"] is False and theirs["sample"] is True
+    assert "Q4 launch check-in" in [e["title"] for e in theirs["events"]] and len(theirs["events"]) == 4
 
     assert emma.delete("/api/calendar/link").status_code == 204
     assert emma.get("/api/calendar/today").json()["connected"] is False
@@ -168,3 +171,16 @@ def test_feed_errors_show_in_panel_without_failing(feed):
     feed["body"].update(status=500, value=b"")
     data = client.get("/api/calendar/today").json()
     assert data["connected"] and data["events"] == [] and "error" in data
+
+
+def test_sample_calendar_has_meetings_every_day_and_never_in_production(monkeypatch):
+    ny = ZoneInfo("America/New_York")
+    for day in (date(2026, 10, 7), date(2026, 10, 10), date(2027, 3, 14)):  # weekday, weekend, DST change
+        events = outlook.events_on(outlook.SAMPLE_ICS, day, ny)
+        assert [e["title"] for e in events] == ["All hands", "Design team sync", "Brand guidelines review", "Q4 launch check-in"]
+        assert events[0]["start"].startswith(f"{day.isoformat()}T10:00:00") and events[0]["tag"] == "All hands"
+
+    import dataclasses
+    monkeypatch.setattr(outlook, "settings", dataclasses.replace(outlook.settings, app_env="production"))
+    data = login("emma@andean.test").get("/api/calendar/today").json()
+    assert data == {"connected": False, "date": data["date"], "events": []}

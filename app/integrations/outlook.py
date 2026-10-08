@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import time
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -24,6 +25,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from ..auth import current_employee, require_csrf
+from ..config import settings
 from ..db import get_db
 from ..models import CalendarLink, Employee
 
@@ -34,6 +36,9 @@ router = APIRouter(prefix="/api/calendar")
 ALLOWED_HOSTS = {"outlook.office365.com", "outlook.office.com", "outlook.live.com"}
 MAX_BYTES = 5 * 1024 * 1024
 CACHE_SECONDS = 300
+
+# Daily sample meetings in Outlook's format, for people who haven't connected a calendar
+SAMPLE_ICS = (Path(__file__).parent / "sample_calendar.ics").read_bytes()
 
 # Tests swap in an httpx.MockTransport here
 transport: Optional[httpx.BaseTransport] = None
@@ -148,6 +153,8 @@ def today(tz: str = "UTC", db: Session = Depends(get_db), me: Employee = Depends
     day = datetime.now(timezone.utc).astimezone(zone).date()
     link = db.get(CalendarLink, me.id)
     if link is None:
+        if settings.sample_calendar:
+            return {"connected": False, "sample": True, "date": day.isoformat(), "events": events_on(SAMPLE_ICS, day, zone)}
         return {"connected": False, "date": day.isoformat(), "events": []}
     try:
         events = events_on(fetch(link.ics_url), day, zone)

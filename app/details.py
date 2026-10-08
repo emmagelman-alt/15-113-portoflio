@@ -132,7 +132,8 @@ def detail(todo_id: int, db: Session = Depends(get_db), me: Employee = Depends(c
 
     elif todo.source == "slack":
         if not settings.slack_configured:
-            out["slack"] = {"error": "Slack isn't connected."}
+            out["slack"] = {"error": "This is a sample Slack request. Slack isn't connected in the demo." if settings.is_demo
+                            else "Slack isn't connected."}
         else:
             try:
                 out["slack"] = slack.thread(todo)

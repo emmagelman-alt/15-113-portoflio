@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Andean Dashboard</title>
   <link rel="icon" href="/static/logomark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/style.css?v=4">
+  <link rel="stylesheet" href="/static/style.css?v=5">
 </head>
 <body>
   <header class="topbar">
@@ -100,12 +100,20 @@
           <span>Outlook calendar</span>
           <button class="link-btn" id="calendar-disconnect" type="button">Disconnect</button>
         </div>
+        <div class="calendar-foot" id="calendar-sample-foot" hidden>
+          <span class="chip">Sample Outlook calendar</span>
+          <button class="link-btn" id="calendar-connect-own" type="button" aria-controls="calendar-connect" aria-expanded="false">Connect your own</button>
+        </div>
       </section>
 
-      <section class="tile widget widget-machines" aria-labelledby="machines-heading">
+      <section class="tile widget widget-machines" id="machines" aria-labelledby="machines-heading">
         <div class="widget-head">
           <h2 id="machines-heading">Machines</h2>
-          <span class="widget-sub"><span id="machines-summary"></span><span class="chip sample">Sample data</span></span>
+          <span class="widget-sub"><span id="machines-summary"></span><span class="chip sample">Sample data</span>
+            <button class="collapse-toggle" id="machines-toggle" type="button" aria-expanded="true" aria-controls="machine-cards" aria-label="Collapse Machines">
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 10l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </span>
         </div>
         <div class="machine-cards" id="machine-cards"></div>
       </section>
@@ -138,8 +146,8 @@
     </div>
     <div class="panel-body" id="panel-body"></div>
   </aside>
-  <script src="/static/app.js?v=3"></script>
+  <script src="/static/app.js?v=5"></script>
   <script src="/static/panel.js?v=3"></script>
-  <script src="/static/widgets.js?v=4"></script>
+  <script src="/static/widgets.js?v=5"></script>
 </body>
 </html>

@@ -13,7 +13,7 @@ Internal dashboard for Andean employees. It collects to-dos from three places in
 - **Attach files** (📎 or paste) to any reply, up to 10 MB each. Coworker conversations show them inline; Notion comments get them as real Notion attachments (up to 3); Slack replies upload them when the app has `files:write`, otherwise they include a link to the file on the dashboard.
 - **Linked docs:** Figma files and Google Docs/Sheets/Slides preview inline. Linked Notion pages render inside the panel when they're shared with the connection.
 
-The layout follows the Figma "Dashboard" frame: to-dos on the left; **Calendar**, **Machines** and the **sherpa.ai** assistant on the right. **Calendar** shows today's meetings from each person's own Outlook calendar; **Machines** and **sherpa.ai** show labelled sample data (`static/widgets.js`) until real sources are connected.
+The layout follows the Figma "Dashboard" frame: to-dos on the left; **Calendar**, **Machines** and the **sherpa.ai** assistant on the right. **Calendar** shows today's meetings from each person's own Outlook calendar (in the demo and locally, a labelled sample Outlook calendar until they connect theirs; never in production); **Machines** (collapsible to one line) and **sherpa.ai** show labelled sample data (`static/widgets.js`) until real sources are connected.
 
 Employees sign in with their Andean Microsoft (Outlook) account. The login page (from the Figma design) takes their work email, then hands off to Microsoft's own page, prefilled, for the password and any two-factor code, so the dashboard never handles passwords. **Remember me** keeps them signed in for 30 days instead of 8 hours, and **Forgot?** opens Microsoft's password reset. The password is entered on Microsoft's page, so this app never sees or stores it.
 
@@ -36,7 +36,7 @@ Run the tests with `.venv/bin/python -m pytest`.
 
 - The login page asks for an email and a **shared demo password** (`DEMO_PASSWORD`, at least 6 characters; the app refuses to start without it). Wrong passwords are rate-limited: 8 tries per visitor and 60 overall per 5 minutes.
 - Only emails in `ALLOWED_EMAIL_DOMAINS` (set it to a demo domain like `andean.test`) can sign in, so real company accounts never exist in the demo.
-- Each new visitor gets a few starter to-dos from sample coworkers.
+- Each new visitor gets a few starter to-dos from sample coworkers and a sample Slack request to accept or dismiss.
 - Everything except the login page, static files and `/healthz` requires sign-in.
 
 On Render: set `APP_ENV=demo`, `DEMO_PASSWORD`, `ALLOWED_EMAIL_DOMAINS=andean.test`, and a generated `SESSION_SECRET`. `BASE_URL` defaults to Render's `RENDER_EXTERNAL_URL`. With the default SQLite database the demo resets on each deploy.
