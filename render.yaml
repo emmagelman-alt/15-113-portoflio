@@ -29,7 +29,7 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.11
-      # Password-protected demo: no Microsoft/Slack/Notion; refuses to start without DEMO_PASSWORD (6+ chars)
+      # Password-protected demo: no Microsoft/Slack/Notion; refuses to start without DEMO_PASSWORD (16+ chars, e.g. a four-word passphrase)
       - key: APP_ENV
         value: demo
       - key: DEMO_PASSWORD
