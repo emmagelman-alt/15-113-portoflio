@@ -38,3 +38,13 @@ services:
         value: andean.test
       - key: SESSION_SECRET
         generateValue: true
+      # sherpa.ai: demo-only keys, set in Render (never in this repo). Without both, the
+      # panel shows its labelled sample chat.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_REPO
+        value: emmagelman-alt/ANDEAN-DESIGN
+      - key: GITHUB_BRANCH
+        value: main
