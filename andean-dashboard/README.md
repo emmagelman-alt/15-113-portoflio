@@ -1,5 +1,16 @@
 ANDEAN DASHBOARD (EMMA WROTE THIS) 
 
+what the project does, how to use it, which features you are most proud of, how to run it locally, and how secrets (if any) are handled.
+
+So my project was developed as a prototype concept for an internal tools software, which is an employee dashboard that consolidates all of the tasks from different inputs such as Notion and Slack messages, as well as enables employees to send tasks through the dashboard to each other. It also tracks the Machines that we have running as well as the live camera footage. I also created something called Sherpa.ai, which is an AI bot that employees can message within the dashboard when they need brand assets. It's a much more streamlined way to get assets rather than digging through the GitHub repo or the brand guidelines.
+
+I also created a calendar integration feature so you can easily see when all your team meetings are. I just wanted to put it all in one place because when I was talking to our CEO, he was saying how there's too many different apps or sources, and it would just be great to have something that can combine everything at once. I also created Sandbox, Notion, and Slack to test these. If you want to run this locally for the graders, I have included the username and password in the Google Form. Unfortunately, I cannot make this available publicly.
+
+For the secrets, everything is in a .env folder in Cursor or in Render. Render, Anthropic, GitHub, and NEON were all used to create this, and they're in my Render environment. I think one of the things I'm most proud of is, on a superficial level, I'm really happy with how the login screen came out. I really want to develop the rest of the UI to look like the login screen.
+
+I think it was really cool seeing how I could develop the Sherpa.ai feature and make getting access to these brand guidelines a lot easier, because as the only designer, I'm kind of the only one that knows how it works. For employees like our management team or our engineers, it's really easy for them to get what they need without having to text me. I am also really happy that I found a way to actually integrate Slack and Notion, because a lot of times people message requests for me on Slack for design work, and it's not always officially put to Notion. Having the ability to collect from both Notion and Slack and put it all in one place helps me stay on top of things.
+
+My plan for the future is to keep developing this out and play with real company assets and sources, as well as develop more track features for the different employee types. For instance, hiring to-dos or more engineering-related work or more chemistry-required work.
 
 
 # Andean Dashboard (AI VERSION OF README)
