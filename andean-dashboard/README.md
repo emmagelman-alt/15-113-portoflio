@@ -1,4 +1,8 @@
-# Andean Dashboard
+ANDEAN DASHBOARD (EMMA WROTE THIS) 
+
+
+
+# Andean Dashboard (AI VERSION OF README)
 
 An internal dashboard for Andean employees. It turns Slack requests, Notion tasks and to-dos from coworkers into one to-do list, and shows today's Outlook meetings and **sherpa.ai**, an assistant that answers questions from Andean's brand asset library.
 
