@@ -31,11 +31,11 @@ def test_demo_settings_must_be_protected(monkeypatch):
     for key, value in {"APP_ENV": "demo", "SESSION_SECRET": "x" * 48, "BASE_URL": "https://demo.onrender.com",
                        "MS_TENANT_ID": "", "DEV_LOGIN": "", "ALLOWED_EMAIL_DOMAINS": "andean.test"}.items():
         monkeypatch.setenv(key, value)
-    monkeypatch.setenv("DEMO_PASSWORD", "short")
+    monkeypatch.setenv("DEMO_PASSWORD", "abc12")
     with pytest.raises(RuntimeError, match="DEMO_PASSWORD"):
         Settings().validate()
-    monkeypatch.setenv("DEMO_PASSWORD", PASSWORD)
-    Settings().validate()  # no Microsoft needed in demo mode
+    monkeypatch.setenv("DEMO_PASSWORD", "AB3CDE")
+    Settings().validate()  # six characters is enough; no Microsoft needed in demo mode
     monkeypatch.setenv("ALLOWED_EMAIL_DOMAINS", "")
     with pytest.raises(RuntimeError, match="ALLOWED_EMAIL_DOMAINS"):
         Settings().validate()
