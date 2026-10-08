@@ -20,6 +20,10 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s: %(m
 settings.validate()
 # TODO: switch to Alembic migrations before the first schema change in production.
 Base.metadata.create_all(engine)
+if settings.is_demo and engine.dialect.name == "sqlite":
+    logging.getLogger(__name__).warning(
+        "Demo data is in a SQLite file, which Render erases whenever the service restarts or redeploys. "
+        "Set DATABASE_URL to a Postgres database so visitors' changes are kept.")
 
 
 @asynccontextmanager

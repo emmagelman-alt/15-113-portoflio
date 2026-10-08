@@ -2,8 +2,12 @@
 
 Visitors sign in on the normal login page with any allowed demo email (ALLOWED_EMAIL_DOMAINS,
 e.g. @andean.test) plus the shared DEMO_PASSWORD. New visitors get a few starter to-dos from
-sample coworkers and a sample Slack request to accept or dismiss, so the dashboard isn't empty.
-Real company accounts never exist here.
+sample coworkers, sample Notion tasks and a sample Slack request to accept or dismiss, so the
+dashboard isn't empty. Real company accounts never exist here.
+
+What visitors do (checking things off, accepting the Slack request) is saved in the database, so
+it's still there next time they sign in. On Render that needs DATABASE_URL set to a Postgres
+database: the default SQLite file is erased whenever the service restarts.
 """
 from __future__ import annotations
 
@@ -21,7 +25,7 @@ from sqlalchemy.orm import Session
 from .auth import EMAIL, _login_error, _start_session, _upsert_employee
 from .config import settings
 from .db import get_db
-from .models import Employee, Todo, TodoComment
+from .models import Employee, Todo, TodoComment, utcnow
 
 router = APIRouter()
 
@@ -66,6 +70,18 @@ def starter_todos(db: Session, me: Employee) -> None:
             db.flush()
             db.add(TodoComment(todo_id=todo.id, author_id=priya.id,
                                body="Its own accent, I think. Light Bronze? Let me know what you pick."))
+    # The demo has no Notion workspace, so these stand in for tasks assigned on the team's board
+    notion_tasks = [
+        ("Redesign the onboarding welcome screen", -1, False),
+        ("Create icon set for the dashboard sidebar", 1, False),
+        ("Update Figma components to the new Andean palette", 2, False),
+        ("Design social graphics for the Q4 launch", 6, False),
+        ("Logo lockup variations for partner co-branding", -3, True),
+    ]
+    for n, (title, days, done) in enumerate(notion_tasks, 1):
+        db.add(Todo(owner_id=me.id, title=title, source="notion", source_id=f"demo:notion:{n}",
+                    status="done" if done else "open", completed_at=utcnow() if done else None,
+                    due_date=today + timedelta(days=days)))
     handle = me.email.split("@")[0]
     db.add(Todo(owner_id=me.id, title=f"@{handle} can you make a design mockup for the new internal tools page by Friday?",
                 source="slack", source_id="demo:suggestion", status="suggested",

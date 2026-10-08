@@ -111,8 +111,10 @@ def _file(a: Attachment) -> Dict[str, Any]:
 def _comment(c: TodoComment, me: Employee, files: List[Attachment]) -> Dict[str, Any]:
     return {"id": c.id, "author": c.author.name if c.author else "Former employee",
             "is_me": c.author_id == me.id, "body": c.body, "files": [_file(a) for a in files],
-            # SQLite drops the timezone; timestamps are stored in UTC
-            "created_at": c.created_at.replace(tzinfo=c.created_at.tzinfo or timezone.utc)}
+            # Always UTC: SQLite drops the timezone (values are stored in UTC) and Postgres
+            # answers in the database server's own timezone
+            "created_at": c.created_at.replace(tzinfo=timezone.utc) if c.created_at.tzinfo is None
+            else c.created_at.astimezone(timezone.utc)}
 
 
 @router.get("/api/todos/{todo_id}/detail")
@@ -147,7 +149,8 @@ def detail(todo_id: int, db: Session = Depends(get_db), me: Employee = Depends(c
 
     elif todo.source == "notion":
         if not settings.notion_configured:
-            out["notion"] = {"error": "Notion isn't connected."}
+            out["notion"] = {"error": "This is a sample Notion task. Notion isn't connected in the demo." if settings.is_demo
+                             else "Notion isn't connected."}
         else:
             try:
                 out["notion"] = page = notion.page_detail(todo.source_id or "")
