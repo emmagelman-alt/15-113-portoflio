@@ -38,6 +38,10 @@ services:
         value: andean.test
       - key: SESSION_SECRET
         generateValue: true
+      # Postgres connection string (e.g. a free Neon database), set in Render. Without it the
+      # demo uses a SQLite file that Render erases on every restart, so visitors' changes are lost.
+      - key: DATABASE_URL
+        sync: false
       # sherpa.ai: demo-only keys, set in Render (never in this repo). Without both, the
       # panel shows its labelled sample chat.
       - key: ANTHROPIC_API_KEY
