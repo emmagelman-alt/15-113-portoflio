@@ -74,10 +74,12 @@ def test_sign_in_gets_starter_todos_once(demo_mode):
     me = client.get("/api/me").json()
     assert me["email"] == "grader@andean.test"
     todos = client.get("/api/todos").json()
-    assert len(todos) == 6
+    assert len(todos) == 11
     [suggestion] = [t for t in todos if t["status"] == "suggested"]
     assert suggestion["source"] == "slack" and suggestion["title"].startswith("@grader can you")
-    todos = [t for t in todos if t["status"] == "open"]
+    notion_tasks = [t for t in todos if t["source"] == "notion"]
+    assert len(notion_tasks) == 5 and [t["status"] for t in notion_tasks].count("done") == 1
+    todos = [t for t in todos if t["status"] == "open" and t["source"] == "internal"]
     assert {t["created_by"]["name"] for t in todos} == {"Priya Shah", "Sam Rivera", "Grader"}
     priya_todo = next(t for t in todos if t["created_by"]["name"] == "Priya Shah")
     client.headers["X-CSRF-Token"] = me["csrf_token"]
@@ -86,10 +88,20 @@ def test_sign_in_gets_starter_todos_once(demo_mode):
     panel = client.get(f"/api/todos/{suggestion['id']}/detail").json()
     assert "sample Slack request" in panel["slack"]["error"]
     assert client.patch(f"/api/todos/{suggestion['id']}", json={"status": "open"}).json()["status"] == "open"
+    # A sample Notion task explains itself in the panel and can be checked off on the dashboard
+    notion_todo = next(t for t in notion_tasks if t["status"] == "open")
+    assert "sample Notion task" in client.get(f"/api/todos/{notion_todo['id']}/detail").json()["notion"]["error"]
+    assert client.patch(f"/api/todos/{notion_todo['id']}", json={"status": "done"}).json()["status"] == "done"
+    assert client.patch(f"/api/todos/{priya_todo['id']}", json={"status": "done"}).json()["status"] == "done"
 
+    # Signing out and back in (or from another browser) shows the same dashboard, not a fresh copy
+    assert client.post("/auth/logout").status_code < 400
+    assert client.get("/api/me").status_code == 401
     again = TestClient(app)
     sign_in(again)
-    assert len(again.get("/api/todos").json()) == 6  # not duplicated on the next visit
+    status = {t["id"]: t["status"] for t in again.get("/api/todos").json()}
+    assert len(status) == 11  # not duplicated on the next visit
+    assert status[suggestion["id"]] == "open" and status[notion_todo["id"]] == "done" and status[priya_todo["id"]] == "done"
 
 
 def test_demo_login_is_off_outside_demo_mode():

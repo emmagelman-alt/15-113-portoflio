@@ -7,7 +7,8 @@ _db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
 os.environ.update({
     "APP_ENV": "development",
     "SESSION_SECRET": "x" * 48,
-    "DATABASE_URL": f"sqlite:///{_db.name}",
+    # TEST_DATABASE_URL runs the tests against another database, e.g. a scratch Postgres
+    "DATABASE_URL": os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{_db.name}",
     "DEV_LOGIN": "1",
     "MS_TENANT_ID": "",
     "MS_CLIENT_ID": "",

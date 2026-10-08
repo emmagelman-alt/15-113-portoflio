@@ -21,7 +21,9 @@ DATABASE_URL = _normalize(settings.database_url)
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
+    # Postgres: no server-side prepared statements, so pooled connection strings (Neon's default,
+    # which go through PgBouncer) work too
+    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {"prepare_threshold": None},
 )
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 

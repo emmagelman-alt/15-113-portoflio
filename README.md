@@ -28,7 +28,7 @@ cp .env.example .env   # then set SESSION_SECRET (command is in the file)
 
 Open http://localhost:8000. Until Microsoft sign-in is configured, use the **Local development sign-in** box. It's only available when `APP_ENV=development` and `DEV_LOGIN=1`, and the app refuses to start if `DEV_LOGIN` is set in production.
 
-Run the tests with `.venv/bin/python -m pytest`.
+Run the tests with `.venv/bin/python -m pytest`. They use a temporary SQLite file; set `TEST_DATABASE_URL` to run them against another database, such as a scratch Postgres.
 
 ## Password-protected demo (class portfolio)
 
@@ -36,7 +36,7 @@ Run the tests with `.venv/bin/python -m pytest`.
 
 - The login page asks for an email and a **shared demo password** (`DEMO_PASSWORD`, at least 16 characters, e.g. a four-word passphrase; the app refuses to start without it). Wrong passwords are rate-limited: 8 tries per visitor and 60 overall per 5 minutes.
 - Only emails in `ALLOWED_EMAIL_DOMAINS` (set it to a demo domain like `andean.test`) can sign in, so real company accounts never exist in the demo.
-- Each new visitor gets a few starter to-dos from sample coworkers and a sample Slack request to accept or dismiss.
+- Each new visitor gets a few starter to-dos from sample coworkers, sample Notion tasks and a sample Slack request to accept or dismiss. What they check off or accept is saved, so it's still there the next time they sign in (with a Postgres `DATABASE_URL`; see below).
 - Everything except the login page, static files and `/healthz` requires sign-in.
 
 To make a passphrase, run this locally and copy the result straight into Render:
@@ -45,7 +45,7 @@ To make a passphrase, run this locally and copy the result straight into Render:
 python3 -c "import secrets; w=[x.strip().lower() for x in open('/usr/share/dict/words') if 4<=len(x.strip())<=8 and x.strip().isalpha()]; print('-'.join(secrets.choice(w) for _ in range(4)))"
 ```
 
-On Render: set `APP_ENV=demo`, `DEMO_PASSWORD`, `ALLOWED_EMAIL_DOMAINS=andean.test`, and a generated `SESSION_SECRET`. `BASE_URL` defaults to Render's `RENDER_EXTERNAL_URL`. With the default SQLite database the demo resets on each deploy.
+On Render: set `APP_ENV=demo`, `DEMO_PASSWORD`, `ALLOWED_EMAIL_DOMAINS=andean.test`, and a generated `SESSION_SECRET`. `BASE_URL` defaults to Render's `RENDER_EXTERNAL_URL`. Also set `DATABASE_URL` to a Postgres database, such as a free [Neon](https://neon.com) database (Render's own free Postgres expires after 30 days). Without it the demo uses a SQLite file, which Render erases whenever the service sleeps, restarts or redeploys, so visitors' changes are lost; the app logs a warning when that's the case.
 
 ## Microsoft sign-in setup (needs Andean IT / an Entra admin)
 
