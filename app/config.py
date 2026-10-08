@@ -86,8 +86,9 @@ class Settings:
         if len(self.session_secret) < 32:
             raise RuntimeError("SESSION_SECRET must be at least 32 characters.")
         if self.is_demo:
-            if len(self.demo_password) < 20:
-                raise RuntimeError("APP_ENV=demo needs DEMO_PASSWORD of at least 20 characters.")
+            # The demo holds only sample data and wrong guesses are rate-limited (app/demo.py)
+            if len(self.demo_password) < 6:
+                raise RuntimeError("APP_ENV=demo needs DEMO_PASSWORD of at least 6 characters.")
             if not self.allowed_email_domains:
                 raise RuntimeError("APP_ENV=demo needs ALLOWED_EMAIL_DOMAINS (e.g. andean.test) so only demo accounts exist.")
         elif self.is_production and not self.microsoft_configured:

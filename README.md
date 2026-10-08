@@ -34,7 +34,7 @@ Run the tests with `.venv/bin/python -m pytest`.
 
 `APP_ENV=demo` runs a showcase with no Microsoft, Slack or Notion setup:
 
-- The login page asks for an email and a **shared demo password** (`DEMO_PASSWORD`, at least 20 characters; the app refuses to start without it). Wrong passwords are rate-limited per visitor.
+- The login page asks for an email and a **shared demo password** (`DEMO_PASSWORD`, at least 6 characters; the app refuses to start without it). Wrong passwords are rate-limited: 8 tries per visitor and 60 overall per 5 minutes.
 - Only emails in `ALLOWED_EMAIL_DOMAINS` (set it to a demo domain like `andean.test`) can sign in, so real company accounts never exist in the demo.
 - Each new visitor gets a few starter to-dos from sample coworkers.
 - Everything except the login page, static files and `/healthz` requires sign-in.
