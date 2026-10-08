@@ -18,6 +18,10 @@ os.environ.update({
     "SLACK_APP_TOKEN": "",
     "NOTION_TOKEN": "",
     "NOTION_TASKS_DATABASE_ID": "",
+    "ANTHROPIC_API_KEY": "",
+    "GITHUB_TOKEN": "",
+    "GITHUB_REPO": "",
+    "GITHUB_BRANCH": "",
 })
 
 from fastapi.testclient import TestClient  # noqa: E402

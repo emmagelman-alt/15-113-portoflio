@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import auth, demo, details, todos
+from . import auth, demo, details, sherpa, todos
 from .config import settings
 from .db import Base, engine
 from .integrations import notion, outlook, slack
@@ -67,6 +67,7 @@ app.include_router(auth.router)
 app.include_router(demo.router)
 app.include_router(todos.router)
 app.include_router(details.router)
+app.include_router(sherpa.router)
 app.include_router(slack.router)
 app.include_router(notion.router)
 app.include_router(outlook.router)

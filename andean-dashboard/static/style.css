@@ -355,11 +355,14 @@ a.file-chip { padding-right: 10px; }
 .machine-name { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; }
 .machine-name strong { white-space: nowrap; }
 
-.sherpa-thread { flex: 1; gap: 10px; }
+/* The message box sits right under the last message: the widget's 12px gap minus 2px
+   matches the 10px between messages. An empty thread takes no space at all. */
+.sherpa-thread { gap: 10px; }
+.sherpa-thread:empty { display: none; }
 .sherpa-row { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .sherpa-row.me { align-items: flex-end; }
 .sherpa-row > * { width: min(520px, 100%); }
-.sherpa-composer { margin-top: 0; }
+.sherpa-composer { margin-top: -2px; }
 .sherpa-composer textarea:disabled { cursor: not-allowed; }
 /* Source links in rows are plain muted text in the design; underline on hover */
 .todo .meta a { text-decoration: none; }

@@ -37,6 +37,14 @@ services:
         sync: false
       - key: NOTION_TASKS_DATABASE_ID
         sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_REPO
+        sync: false
+      - key: GITHUB_BRANCH
+        sync: false
 
 databases:
   - name: andean-dashboard-db
