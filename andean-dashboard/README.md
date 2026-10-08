@@ -34,10 +34,16 @@ Run the tests with `.venv/bin/python -m pytest`.
 
 `APP_ENV=demo` runs a showcase with no Microsoft, Slack or Notion setup:
 
-- The login page asks for an email and a **shared demo password** (`DEMO_PASSWORD`, at least 6 characters; the app refuses to start without it). Wrong passwords are rate-limited: 8 tries per visitor and 60 overall per 5 minutes.
+- The login page asks for an email and a **shared demo password** (`DEMO_PASSWORD`, at least 16 characters, e.g. a four-word passphrase; the app refuses to start without it). Wrong passwords are rate-limited: 8 tries per visitor and 60 overall per 5 minutes.
 - Only emails in `ALLOWED_EMAIL_DOMAINS` (set it to a demo domain like `andean.test`) can sign in, so real company accounts never exist in the demo.
 - Each new visitor gets a few starter to-dos from sample coworkers and a sample Slack request to accept or dismiss.
 - Everything except the login page, static files and `/healthz` requires sign-in.
+
+To make a passphrase, run this locally and copy the result straight into Render:
+
+```bash
+python3 -c "import secrets; w=[x.strip().lower() for x in open('/usr/share/dict/words') if 4<=len(x.strip())<=8 and x.strip().isalpha()]; print('-'.join(secrets.choice(w) for _ in range(4)))"
+```
 
 On Render: set `APP_ENV=demo`, `DEMO_PASSWORD`, `ALLOWED_EMAIL_DOMAINS=andean.test`, and a generated `SESSION_SECRET`. `BASE_URL` defaults to Render's `RENDER_EXTERNAL_URL`. With the default SQLite database the demo resets on each deploy.
 
