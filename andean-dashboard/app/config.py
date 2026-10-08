@@ -75,6 +75,11 @@ class Settings:
         return self.app_env == "demo"
 
     @property
+    def sample_calendar(self) -> bool:
+        """Show a sample Outlook calendar to people who haven't connected theirs (never in production)."""
+        return self.is_demo or self.app_env == "development"
+
+    @property
     def dev_login_enabled(self) -> bool:
         return self.dev_login and not self.is_production
 

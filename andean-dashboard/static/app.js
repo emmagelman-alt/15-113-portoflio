@@ -69,12 +69,15 @@ function todoItem(t, { readOnly = false, suggested = false } = {}) {
 
   const li = el("li", { class: `todo${t.status === "done" ? " done" : ""}` });
   if (suggested) {
-    // Per the Figma "Dashboard" frame: who it's from and the Slack link; Accept/Dismiss live in the task panel
+    // Who it's from and the Slack link, with Accept (adds it to My to-dos) and Dismiss stacked on the right
     const author = t.created_by ? t.created_by.name : ((t.notes || "").match(/from (.+)$/i) || [])[1];
     const info = el("div", { class: "meta" }, author ? el("span", {}, `From ${author}`) : t.notes ? el("span", {}, t.notes) : null,
       t.source_url ? el("a", { href: t.source_url, target: "_blank", rel: "noopener noreferrer" }, `Open in ${SOURCE_LABEL[t.source]} ↗`) : null);
     li.className = "todo suggestion";
-    li.append(el("div", { class: "body" }, titleButton(t), info));
+    li.append(el("div", { class: "body" }, titleButton(t), info),
+      el("div", { class: "actions" },
+        el("button", { class: "btn btn-small", type: "button", "aria-label": `Add "${t.title}" to my to-dos`, onclick: () => setStatus(t, "open") }, "Accept"),
+        el("button", { class: "btn btn-ghost btn-small", type: "button", "aria-label": `Dismiss "${t.title}"`, onclick: () => dismiss(t) }, "Dismiss")));
     return li;
   }
   if (!readOnly) {
@@ -141,6 +144,16 @@ async function setStatus(t, status) {
     alert(e.message);
   }
   render();
+}
+
+async function dismiss(t) {
+  try {
+    await api(`/api/todos/${t.id}`, { method: "DELETE" });
+    state.todos = state.todos.filter((x) => x.id !== t.id);
+    render();
+  } catch (e) {
+    alert(e.message);
+  }
 }
 
 async function remove(t) {

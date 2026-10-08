@@ -1,6 +1,7 @@
 /* Right-hand column of the dashboard (Figma: "Dashboard" frame). Calendar reads the
-   employee's Outlook calendar (app/integrations/outlook.py). Machines and sherpa.ai have
-   no data source yet, so they render the design's sample content, labelled "Sample data".
+   employee's Outlook calendar (app/integrations/outlook.py), or a labelled sample calendar
+   in the demo and locally until they connect theirs. Machines and sherpa.ai have no data
+   source yet, so they render the design's sample content, labelled "Sample data".
    Uses helpers from app.js and panel.js. */
 const SAMPLE = {
   machines: [
@@ -29,6 +30,8 @@ function meetingRow(e) {
     e.tag ? el("span", { class: `badge ${/^(all hands|company)$/i.test(e.tag) ? "badge-internal" : "badge-notion"}` }, e.tag) : null);
 }
 
+let calendarFormOpen = false;
+
 async function renderCalendar() {
   let data;
   try {
@@ -40,10 +43,12 @@ async function renderCalendar() {
   }
   const [y, m, d] = data.date.split("-").map(Number);
   $("calendar-date").textContent = new Date(y, m - 1, d).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-  $("calendar-connect").hidden = data.connected;
+  const sample = !data.connected && !!data.sample;
+  $("calendar-connect").hidden = data.connected || (sample && !calendarFormOpen);
   $("calendar-foot").hidden = !data.connected;
+  $("calendar-sample-foot").hidden = !sample;
   $("meetings").replaceChildren(...data.events.map(meetingRow));
-  const note = data.error || (data.connected && !data.events.length ? "No meetings today." : "");
+  const note = data.error || ((data.connected || sample) && !data.events.length ? "No meetings today." : "");
   $("calendar-note").textContent = note;
   $("calendar-note").hidden = !note;
   $("calendar-note").classList.toggle("form-error", !!data.error);
@@ -67,6 +72,13 @@ $("calendar-connect").addEventListener("submit", async (e) => {
   }
 });
 
+$("calendar-connect-own").addEventListener("click", (e) => {
+  calendarFormOpen = !calendarFormOpen;
+  e.currentTarget.setAttribute("aria-expanded", String(calendarFormOpen));
+  $("calendar-connect").hidden = !calendarFormOpen;
+  if (calendarFormOpen) $("calendar-url").focus();
+});
+
 $("calendar-disconnect").addEventListener("click", async () => {
   if (!confirm("Disconnect your Outlook calendar from the dashboard?")) return;
   await api("/api/calendar/link", { method: "DELETE" }).catch((e) => alert(e.message));
@@ -81,6 +93,20 @@ function renderMachines() {
     el("div", { class: "machine-name" }, el("strong", {}, m.name), el("span", { class: "chip" }, m.running ? "Running" : "Idle")))));
 }
 
+// Machines collapses to its header line; the choice is remembered in this browser
+const MACHINES_KEY = "andean.machines.collapsed";
+
+function setMachinesCollapsed(collapsed) {
+  $("machines").classList.toggle("collapsed", collapsed);
+  $("machine-cards").hidden = collapsed;
+  const toggle = $("machines-toggle");
+  toggle.setAttribute("aria-expanded", String(!collapsed));
+  toggle.setAttribute("aria-label", collapsed ? "Expand Machines" : "Collapse Machines");
+  try { localStorage.setItem(MACHINES_KEY, collapsed ? "1" : "0"); } catch (e) { /* storage unavailable */ }
+}
+
+$("machines-toggle").addEventListener("click", () => setMachinesCollapsed(!$("machines").classList.contains("collapsed")));
+
 function renderSherpa() {
   $("sherpa-thread").replaceChildren(...SAMPLE.sherpa.map((m) => el("li", { class: `sherpa-row${m.me ? " me" : ""}` },
     el("div", { class: `msg${m.me ? " mine" : ""}` },
@@ -93,6 +119,7 @@ function renderSherpa() {
 }
 
 renderMachines();
+try { setMachinesCollapsed(localStorage.getItem(MACHINES_KEY) === "1"); } catch (e) { setMachinesCollapsed(false); }
 renderSherpa();
 // Calendar needs the signed-in user (app.js loads it); refresh every 5 minutes
 (function waitForMe() {

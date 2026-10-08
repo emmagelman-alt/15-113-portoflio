@@ -2,7 +2,8 @@
 
 Visitors sign in on the normal login page with any allowed demo email (ALLOWED_EMAIL_DOMAINS,
 e.g. @andean.test) plus the shared DEMO_PASSWORD. New visitors get a few starter to-dos from
-sample coworkers so the dashboard isn't empty. Real company accounts never exist here.
+sample coworkers and a sample Slack request to accept or dismiss, so the dashboard isn't empty.
+Real company accounts never exist here.
 """
 from __future__ import annotations
 
@@ -65,6 +66,10 @@ def starter_todos(db: Session, me: Employee) -> None:
             db.flush()
             db.add(TodoComment(todo_id=todo.id, author_id=priya.id,
                                body="Its own accent, I think. Light Bronze? Let me know what you pick."))
+    handle = me.email.split("@")[0]
+    db.add(Todo(owner_id=me.id, title=f"@{handle} can you make a design mockup for the new internal tools page by Friday?",
+                source="slack", source_id="demo:suggestion", status="suggested",
+                notes="#design-requests · from Test Coworker"))
     db.commit()
 
 
