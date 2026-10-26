@@ -1,3 +1,7 @@
+I used Claude Code and Figma for the project. I used Claude Code to build almost everything and help me determine which APIs to use, such as Render and Neon, and I created and tweaked the UI in Figma, which was connected to Claude. 
+
+I didn't run into many issues with Claude Code; however, hoever the one repeated error was with the UI. In some cases, features would extend downward indefinitely when I added items. Examples included the to-do list and the Sherpa AI chat log. I was able to fix this by taking screenshots or manually moving things in Figma and giving it back to Claude to remake. 
+
 # Prompt log
 
 Every prompt I gave Claude Code (Claude Opus 5.5, in the Claude desktop app) while building the Andean Dashboard, from October 6 to 7, 2026. Times are Eastern.
