@@ -1,0 +1,178 @@
+/* Warp's look for the Inventory demo. The color tokens are Warp's own (app/globals.css: the Andean
+   palette), stored as RGB channels and used as rgb(var(--name)), so both themes match the real app. */
+:root {
+  --background: 240 239 241;
+  --foreground: 0 13 25;
+  --card: 240 239 241;
+  --primary: 21 47 73;
+  --primary-foreground: 240 239 241;
+  --muted: 226 227 229;
+  --muted-foreground: 95 105 124;
+  --accent: 235 217 214;
+  --border: 200 204 205;
+  --sidebar: 230 230 233;
+  --success-ink: 46 107 79;
+  --danger-ink: 161 58 53;
+  --radius: 0.5rem;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 0 13 25;
+    --foreground: 240 239 241;
+    --card: 8 25 43;
+    --primary: 214 166 142;
+    --primary-foreground: 0 13 25;
+    --muted: 13 35 56;
+    --muted-foreground: 171 148 145;
+    --accent: 21 47 73;
+    --border: 21 47 73;
+    --sidebar: 0 13 25;
+    --success-ink: 140 197 164;
+    --danger-ink: 240 133 123;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --background: 0 13 25;
+  --foreground: 240 239 241;
+  --card: 8 25 43;
+  --primary: 214 166 142;
+  --primary-foreground: 0 13 25;
+  --muted: 13 35 56;
+  --muted-foreground: 171 148 145;
+  --accent: 21 47 73;
+  --border: 21 47 73;
+  --sidebar: 0 13 25;
+  --success-ink: 140 197 164;
+  --danger-ink: 240 133 123;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: rgb(var(--background));
+  color: rgb(var(--foreground));
+  font-family: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2 { margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: 16px; font-weight: 600; }
+h2 { font-size: 15px; font-weight: 600; }
+p { margin: 0; }
+.muted { color: rgb(var(--muted-foreground)); }
+.small { font-size: 12px; }
+.strong { font-weight: 600; }
+
+/* Sidebar, header and the page around the Inventory content */
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 232px; flex: none; display: flex; flex-direction: column; gap: 18px;
+  padding: 16px 12px; background: rgb(var(--sidebar)); border-right: 1px solid rgb(var(--border));
+}
+.brand { font-weight: 600; padding: 4px 8px; }
+.brand span { font-weight: 400; color: rgb(var(--muted-foreground)); }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav-heading {
+  margin: 14px 8px 4px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgb(var(--muted-foreground));
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px;
+  color: rgb(var(--muted-foreground));
+}
+.nav-item svg {
+  width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.nav-item.is-active { background: rgb(var(--accent)); color: rgb(var(--foreground)); font-weight: 500; }
+.theme-toggle {
+  margin-top: auto; align-self: flex-start; font: inherit; font-size: 13px; padding: 6px 8px;
+  border: 1px solid rgb(var(--border)); border-radius: 6px; background: transparent;
+  color: rgb(var(--muted-foreground)); cursor: pointer;
+}
+.theme-toggle:hover { color: rgb(var(--foreground)); }
+
+.main { flex: 1; min-width: 0; }
+.topbar { height: 56px; display: flex; align-items: center; padding: 0 24px; border-bottom: 1px solid rgb(var(--border)); }
+.eyebrow { font-size: 11px; line-height: 1; letter-spacing: 0.06em; text-transform: uppercase; color: rgb(var(--muted-foreground)); }
+.demo-note {
+  padding: 8px 24px; font-size: 13px; color: rgb(var(--muted-foreground));
+  border-bottom: 1px solid rgb(var(--border)); background: rgb(var(--muted) / 0.5);
+}
+.link {
+  font: inherit; padding: 0; margin-left: 6px; border: 0; background: none; cursor: pointer;
+  color: rgb(var(--foreground)); text-decoration: underline; text-underline-offset: 2px;
+}
+.content { padding: 24px; max-width: 72rem; display: flex; flex-direction: column; gap: 20px; }
+
+/* Log parts cut out */
+.card { border: 1px solid rgb(var(--border)); border-radius: var(--radius); background: rgb(var(--card)); }
+.log-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding: 16px; }
+.log-intro { flex: 1 1 12rem; min-width: 0; align-self: center; }
+.log-intro .muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field-part { flex: 2 1 14rem; }
+.field-qty { flex: 0 1 7rem; min-width: 6rem; }
+label { font-size: 13px; font-weight: 500; }
+select, input {
+  font: inherit; height: 36px; width: 100%; padding: 0 10px; border-radius: 6px;
+  border: 1px solid rgb(var(--border)); background: rgb(var(--background)); color: rgb(var(--foreground));
+}
+select:focus-visible, input:focus-visible, button:focus-visible, .slice:focus-visible {
+  outline: 2px solid rgb(var(--primary)); outline-offset: 2px;
+}
+[aria-invalid="true"] { border-color: rgb(var(--danger-ink)); }
+.button {
+  font: inherit; font-weight: 500; height: 36px; padding: 0 16px; border: 0; border-radius: 6px; cursor: pointer;
+  background: rgb(var(--primary)); color: rgb(var(--primary-foreground));
+}
+.button:hover { opacity: 0.9; }
+.form-error { flex-basis: 100%; font-size: 13px; color: rgb(var(--danger-ink)); }
+
+/* Processed products and the parts wheel */
+.columns { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 24px; }
+.products { flex: 1 1 17rem; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.parts { flex: 999 1 32rem; min-width: 0; }
+.parts > .muted { margin: 2px 0 12px; }
+.product-list { display: flex; flex-direction: column; gap: 8px; }
+.product {
+  width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  padding: 12px 14px; border-radius: var(--radius); border: 1px solid rgb(var(--border)); background: rgb(var(--card));
+}
+.product:hover, .product[aria-pressed="true"] { background: rgb(var(--accent)); }
+.product[aria-pressed="true"] { border-color: rgb(var(--primary)); }
+.product-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.product-name { display: block; }
+.product[aria-pressed="true"] .product-name { font-weight: 600; }
+.product-detail { display: block; font-size: 12px; color: rgb(var(--muted-foreground)); }
+.product-count { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.product-bar { display: block; margin-top: 8px; height: 6px; border-radius: 999px; overflow: hidden; background: rgb(var(--muted)); }
+.product-bar span { display: block; height: 100%; background: rgb(var(--primary)); }
+
+.wheel { display: flex; flex-direction: column; align-items: center; }
+.wheel svg { width: 100%; max-width: 440px; user-select: none; -webkit-user-select: none; }
+.wheel .caption { margin-top: 4px; font-size: 12px; color: rgb(var(--muted-foreground)); text-align: center; }
+.slice { cursor: pointer; outline: none; transition: opacity 150ms; }
+.w-num { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.w-label { font-size: 11.5px; }
+.w-title { font-size: 13px; font-weight: 600; }
+.w-sub { font-size: 12px; font-variant-numeric: tabular-nums; }
+.w-total { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.empty { width: 100%; padding: 24px; border: 1px dashed rgb(var(--border)); border-radius: var(--radius); color: rgb(var(--muted-foreground)); }
+
+.toast {
+  position: fixed; right: 16px; bottom: 16px; max-width: calc(100vw - 32px); padding: 10px 14px;
+  border-radius: var(--radius); border: 1px solid rgb(var(--border)); background: rgb(var(--card));
+  box-shadow: 0 6px 20px rgb(0 13 25 / 0.18); font-size: 13px;
+}
+
+/* Phones: no sidebar (Warp moves it into a menu), tighter gutters */
+@media (max-width: 767px) {
+  .sidebar { display: none; }
+  .topbar, .demo-note { padding-left: 16px; padding-right: 16px; }
+  .content { padding: 16px; }
+}

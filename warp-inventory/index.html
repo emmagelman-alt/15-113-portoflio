@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory demo — Emma Gelman</title>
+  <meta name="description" content="A working copy of Warp's Inventory page with sample data: processed e-waste by product and a wheel of the parts left to cut." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="demo/style.css?v=1" />
+  <!-- Pick the theme before the page paints, so it doesn't flash the wrong one -->
+  <script>
+    try {
+      var t = localStorage.getItem("warp-inventory-demo-theme");
+      if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <!--
+    A static copy of the Inventory page from Warp, Andean's internal app. The real page is a Next.js
+    server page over Supabase (see code/); this one runs on sample data in the browser, so anyone
+    can try it. What you log is kept in this browser only.
+  -->
+  <div class="app">
+    <aside class="sidebar" aria-label="Warp">
+      <div class="brand">Andean <span>Warp</span></div>
+      <nav class="nav" aria-label="Warp pages (not part of the demo)">
+        <span class="nav-item"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>Projects</span>
+        <span class="nav-item"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8.5 12 2.5 2.5 4.5-5" /></svg>My tasks</span>
+        <span class="nav-item"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.3a6.5 6.5 0 0 1 3.5 5.7" /></svg>Team</span>
+        <p class="nav-heading">Data</p>
+        <span class="nav-item"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>Lazarus 2</span>
+        <span class="nav-item is-active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 8-9-5-9 5 9 5zM3 8v8l9 5 9-5V8M12 13v8" /></svg>Inventory</span>
+      </nav>
+      <button class="theme-toggle" id="themeToggle" type="button">Dark mode</button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">Data</div>
+          <h1>Inventory</h1>
+        </div>
+      </header>
+
+      <p class="demo-note">
+        Demo with sample data. What you log stays in this browser.
+        <button type="button" class="link" id="reset">Reset the sample data</button>
+      </p>
+
+      <div class="content">
+        <!-- Log parts cut out: from the selected product, or from any device -->
+        <form class="card log-form" id="logForm" aria-labelledby="logTitle" novalidate>
+          <div class="log-intro">
+            <p id="logTitle" class="strong">Log parts cut out</p>
+            <p class="muted" id="logFrom">Any device</p>
+          </div>
+          <div class="field field-part">
+            <label for="part">Part</label>
+            <select id="part" aria-describedby="logError">
+              <option value="">Choose a part</option>
+            </select>
+          </div>
+          <div class="field field-qty">
+            <label for="qty">How many</label>
+            <input id="qty" type="number" inputmode="numeric" step="1" min="1" max="10000" value="1" aria-describedby="logError" />
+          </div>
+          <button type="submit" class="button">Add</button>
+          <p class="form-error" id="logError" role="alert" hidden></p>
+        </form>
+
+        <div class="columns">
+          <section class="products" aria-labelledby="processedTitle">
+            <div>
+              <h2 id="processedTitle">Processed</h2>
+              <p class="muted">Pick one to see its parts</p>
+            </div>
+            <div id="productList" class="product-list"></div>
+          </section>
+
+          <section class="parts" aria-labelledby="partsTitle">
+            <h2 id="partsTitle">Parts to cut from all products</h2>
+            <p class="muted" id="partsCount">0 processed devices</p>
+            <div id="wheel" class="wheel"></div>
+            <p class="small muted">Part counts are estimates from each model's typical parts list.</p>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="demo/data.js?v=1"></script>
+  <script src="demo/app.js?v=1"></script>
+</body>
+</html>
